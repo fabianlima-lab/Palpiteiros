@@ -5,6 +5,7 @@ import { Header } from '../../components/Header'
 import { BottomNav } from '../../components/BottomNav'
 import { SocialPostCard } from '../../components/SocialPostCard'
 import { RumorDetailClient } from './RumorDetailClient'
+import { NewsSectionWrapper } from './NewsSectionWrapper'
 
 interface PageProps {
   params: Promise<{ id: string }>
@@ -184,6 +185,11 @@ export default async function RumorDetailPage({ params }: PageProps) {
               <span style={{ color: '#666680', fontSize: '14px' }}>Nenhum sinal ainda</span>
             </div>
           )}
+        </div>
+
+        {/* News Section - Agregação de Notícias */}
+        <div style={{ marginTop: '24px' }}>
+          <NewsSectionWrapper rumorId={rumor.id} />
         </div>
 
         {/* Social Feed */}

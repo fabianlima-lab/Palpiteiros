@@ -60,6 +60,12 @@ model Rumor {
   predictions     Prediction[]
   signals         Signal[]
   socialPosts     SocialPost[]
+
+  // Sistema de agregação de notícias
+  newsItems    RumorNewsItem[]
+  rumorSignals RumorSignal[]
+  lastScraped  DateTime?
+  signalScore  Float?          @default(0) // Score agregado de todos os sinais
 }
 
 model Prediction {
@@ -135,4 +141,66 @@ model Notification {
   read      Boolean  @default(false)
   data      String?
   createdAt DateTime @default(now())
+}
+
+// ===============================================
+// SISTEMA DE AGREGAÇÃO DE NOTÍCIAS
+// ===============================================
+
+model NewsItem {
+  id           String   @id @default(cuid())
+  source       String   // "twitter" | "youtube" | "globo" | "uol"
+  sourceId     String   // ID único na fonte (tweet ID, video ID, URL)
+  sourceUrl    String   // Link original
+  authorName   String?  // Nome do autor/canal
+  authorHandle String?  // @handle no Twitter, channel ID no YouTube
+  authorAvatar String?  // URL do avatar
+  content      String   // Texto do tweet/título do vídeo/headline
+  summary      String?  // Resumo extraído (primeiros 280 chars)
+  imageUrl     String?  // Thumbnail ou imagem
+  publishedAt  DateTime // Data de publicação original
+  scrapedAt    DateTime @default(now())
+
+  // Relacionamento com rumores
+  rumors RumorNewsItem[]
+
+  // Entidades extraídas (armazenadas como JSON string para SQLite)
+  players String? // JSON array: ["neymar", "paqueta"]
+  teams   String? // JSON array: ["flamengo", "santos"]
+
+  // Métricas (para Twitter/YouTube)
+  likes    Int?
+  retweets Int?
+  views    Int?
+
+  @@unique([source, sourceId])
+  @@index([publishedAt])
+  @@index([source])
+}
+
+model RumorNewsItem {
+  id         String   @id @default(cuid())
+  rumorId    String
+  newsItemId String
+  relevance  Float // 0-1, quão relevante é pro rumor
+  createdAt  DateTime @default(now())
+
+  rumor    Rumor    @relation(fields: [rumorId], references: [id])
+  newsItem NewsItem @relation(fields: [newsItemId], references: [id])
+
+  @@unique([rumorId, newsItemId])
+}
+
+model RumorSignal {
+  id       String   @id @default(cuid())
+  rumorId  String
+  period   DateTime // Timestamp do período (hora cheia)
+  source   String // "twitter" | "youtube" | "globo" | "uol" | "all"
+  mentions Int // Quantidade de menções no período
+  velocity Float // Taxa de crescimento vs período anterior
+
+  rumor Rumor @relation(fields: [rumorId], references: [id])
+
+  @@unique([rumorId, period, source])
+  @@index([rumorId, period])
 }
