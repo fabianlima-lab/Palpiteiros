@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id          String       @id @default(cuid())
+  name        String
+  username    String       @unique
+  avatar      String?
+  team        String?
+  points      Int          @default(0)
+  level       Int          @default(1)
+  isPremium   Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  predictions Prediction[]
+  badges      UserBadge[]
+}
+
+model Badge {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  emoji       String
+  users       UserBadge[]
+}
+
+model UserBadge {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String
+  badge     Badge    @relation(fields: [badgeId], references: [id])
+  earnedAt  DateTime @default(now())
+
+  @@unique([userId, badgeId])
+}
+
+model Rumor {
+  id              String       @id @default(cuid())
+  playerName      String
+  playerImage     String?
+  fromTeam        String?
+  toTeam          String
+  title           String
+  description     String?
+  category        String       @default("transferencia")
+  sentiment       Float        @default(0.5)
+  status          String       @default("open")
+  closesAt        DateTime
+  resolvedAt      DateTime?
+  resolvedOutcome Boolean?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  predictions     Prediction[]
+  signals         Signal[]
+  socialPosts     SocialPost[]
+}
+
+model Prediction {
+  id         String   @id @default(cuid())
+  rumorId    String
+  rumor      Rumor    @relation(fields: [rumorId], references: [id])
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  prediction Boolean
+  createdAt  DateTime @default(now())
+
+  @@unique([rumorId, userId])
+}
+
+model Influencer {
+  id          String   @id @default(cuid())
+  name        String
+  username    String   @unique
+  avatar      String?
+  outlet      String
+  bio         String?
+  trustScore  Float    @default(0.5)
+  totalHits   Int      @default(0)
+  totalMisses Int      @default(0)
+  followers   Int      @default(0)
+  twitter     String?
+  instagram   String?
+  youtube     String?
+  tiktok      String?
+  promoTitle  String?
+  promoUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  signals     Signal[]
+}
+
+model Signal {
+  id           String     @id @default(cuid())
+  rumorId      String
+  rumor        Rumor      @relation(fields: [rumorId], references: [id])
+  influencerId String
+  influencer   Influencer @relation(fields: [influencerId], references: [id])
+  signal       String
+  confidence   Float
+  reasoning    String?
+  source       String?
+  createdAt    DateTime   @default(now())
+}
+
+model SocialPost {
+  id        String   @id @default(cuid())
+  rumorId   String?
+  rumor     Rumor?   @relation(fields: [rumorId], references: [id])
+  platform  String
+  author    String
+  username  String
+  avatar    String?
+  content   String
+  mediaUrl  String?
+  likes     Int      @default(0)
+  comments  Int      @default(0)
+  shares    Int      @default(0)
+  postedAt  DateTime
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  data      String?
+  createdAt DateTime @default(now())
+}
