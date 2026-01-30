@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 
 // Design System do PRD
@@ -111,17 +111,87 @@ function getTeamColor(teamName: string): string {
   return colors[teamName] || '#27272A'
 }
 
+// Skeleton Loader Component
+function SkeletonCard() {
+  return (
+    <div style={{
+      padding: '20px',
+      borderBottom: `1px solid ${COLORS.borderPrimary}`,
+    }}>
+      {/* Header skeleton */}
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+        <div style={{
+          width: '80px',
+          height: '24px',
+          background: `linear-gradient(90deg, ${COLORS.bgSecondary} 25%, ${COLORS.borderPrimary} 50%, ${COLORS.bgSecondary} 75%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+          borderRadius: '4px',
+        }} />
+        <div style={{
+          width: '40px',
+          height: '24px',
+          background: `linear-gradient(90deg, ${COLORS.bgSecondary} 25%, ${COLORS.borderPrimary} 50%, ${COLORS.bgSecondary} 75%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+          borderRadius: '4px',
+        }} />
+      </div>
+
+      {/* Title skeleton */}
+      <div style={{
+        width: '90%',
+        height: '24px',
+        background: `linear-gradient(90deg, ${COLORS.bgSecondary} 25%, ${COLORS.borderPrimary} 50%, ${COLORS.bgSecondary} 75%)`,
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.5s infinite',
+        borderRadius: '4px',
+        marginBottom: '14px',
+      }} />
+
+      {/* Progress bar skeleton */}
+      <div style={{
+        width: '100%',
+        height: '8px',
+        background: `linear-gradient(90deg, ${COLORS.bgSecondary} 25%, ${COLORS.borderPrimary} 50%, ${COLORS.bgSecondary} 75%)`,
+        backgroundSize: '200% 100%',
+        animation: 'shimmer 1.5s infinite',
+        borderRadius: '4px',
+        marginBottom: '14px',
+      }} />
+
+      {/* Buttons skeleton */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+        <div style={{
+          width: '100px',
+          height: '36px',
+          background: `linear-gradient(90deg, ${COLORS.bgSecondary} 25%, ${COLORS.borderPrimary} 50%, ${COLORS.bgSecondary} 75%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+          borderRadius: '6px',
+        }} />
+        <div style={{
+          width: '100px',
+          height: '36px',
+          background: `linear-gradient(90deg, ${COLORS.bgSecondary} 25%, ${COLORS.borderPrimary} 50%, ${COLORS.bgSecondary} 75%)`,
+          backgroundSize: '200% 100%',
+          animation: 'shimmer 1.5s infinite',
+          borderRadius: '6px',
+        }} />
+      </div>
+    </div>
+  )
+}
+
 // Componente Card de Rumor com votação real
 function RumorCard({
   rumor,
   userId,
   userPrediction,
-  onVote
 }: {
   rumor: Rumor
   userId?: string
   userPrediction?: boolean
-  onVote: (rumorId: string, prediction: boolean) => Promise<void>
 }) {
   const [voted, setVoted] = useState<boolean | null>(userPrediction ?? null)
   const [isVoting, setIsVoting] = useState(false)
@@ -400,10 +470,30 @@ function RumorCard({
   )
 }
 
+const TIMES = [
+  { id: 'flamengo', nome: 'Flamengo', emoji: '🔴', cor: '#E11D48' },
+  { id: 'corinthians', nome: 'Corinthians', emoji: '⚫', cor: '#18181B' },
+  { id: 'palmeiras', nome: 'Palmeiras', emoji: '💚', cor: '#16A34A' },
+  { id: 'santos', nome: 'Santos', emoji: '⚪', cor: '#E5E7EB' },
+  { id: 'sao-paulo', nome: 'São Paulo', emoji: '🔴', cor: '#DC2626' },
+  { id: 'botafogo', nome: 'Botafogo', emoji: '⭐', cor: '#FBBF24' },
+  { id: 'fluminense', nome: 'Fluminense', emoji: '🟢', cor: '#7C3AED' },
+  { id: 'vasco', nome: 'Vasco', emoji: '⚫', cor: '#1F2937' },
+  { id: 'atletico-mg', nome: 'Atlético-MG', emoji: '⚫', cor: '#27272A' },
+  { id: 'cruzeiro', nome: 'Cruzeiro', emoji: '💙', cor: '#2563EB' },
+  { id: 'internacional', nome: 'Inter', emoji: '🔴', cor: '#B91C1C' },
+  { id: 'gremio', nome: 'Grêmio', emoji: '💙', cor: '#0EA5E9' },
+]
+
 export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
   const [rumors, setRumors] = useState(initialRumors)
   const [filtro, setFiltro] = useState<'quentes' | 'recentes' | 'fechando'>('quentes')
   const [showUpsellModal, setShowUpsellModal] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasMore, setHasMore] = useState(true)
+  const [offset, setOffset] = useState(initialRumors.length)
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   // Buscar palpites do usuário
   const userPredictions = new Map<string, boolean>()
@@ -414,28 +504,70 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
     })
   }
 
-  const handleVote = async (rumorId: string, prediction: boolean) => {
-    // Já é tratado no componente RumorCard
-  }
-
   const meuTime = user?.team || 'Flamengo'
-
-  const TIMES = [
-    { id: 'flamengo', nome: 'Flamengo', emoji: '🔴', cor: '#E11D48' },
-    { id: 'corinthians', nome: 'Corinthians', emoji: '⚫', cor: '#18181B' },
-    { id: 'palmeiras', nome: 'Palmeiras', emoji: '💚', cor: '#16A34A' },
-    { id: 'santos', nome: 'Santos', emoji: '⚪', cor: '#E5E7EB' },
-    { id: 'sao-paulo', nome: 'São Paulo', emoji: '🔴', cor: '#DC2626' },
-    { id: 'botafogo', nome: 'Botafogo', emoji: '⭐', cor: '#FBBF24' },
-    { id: 'fluminense', nome: 'Fluminense', emoji: '🟢', cor: '#7C3AED' },
-    { id: 'vasco', nome: 'Vasco', emoji: '⚫', cor: '#1F2937' },
-    { id: 'atletico-mg', nome: 'Atlético-MG', emoji: '⚫', cor: '#27272A' },
-    { id: 'cruzeiro', nome: 'Cruzeiro', emoji: '💙', cor: '#2563EB' },
-    { id: 'internacional', nome: 'Inter', emoji: '🔴', cor: '#B91C1C' },
-    { id: 'gremio', nome: 'Grêmio', emoji: '💙', cor: '#0EA5E9' },
-  ]
-
   const meuTimeObj = TIMES.find(t => t.nome.toLowerCase().includes(meuTime.toLowerCase())) || TIMES[0]
+
+  // Função para carregar mais rumores
+  const loadMore = useCallback(async () => {
+    if (isLoading || !hasMore) return
+
+    setIsLoading(true)
+    try {
+      const params = new URLSearchParams({
+        limit: '10',
+        offset: offset.toString(),
+        order: filtro,
+      })
+
+      const response = await fetch(`/api/rumors?${params}`)
+      const data = await response.json()
+
+      if (data.rumors && data.rumors.length > 0) {
+        setRumors(prev => [...prev, ...data.rumors])
+        setOffset(prev => prev + data.rumors.length)
+        setHasMore(data.hasMore)
+      } else {
+        setHasMore(false)
+      }
+    } catch (error) {
+      console.error('Erro ao carregar mais rumores:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [isLoading, hasMore, offset, filtro])
+
+  // Configurar Intersection Observer para scroll infinito
+  useEffect(() => {
+    if (observerRef.current) {
+      observerRef.current.disconnect()
+    }
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoading) {
+          loadMore()
+        }
+      },
+      { threshold: 0.1 }
+    )
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current)
+    }
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
+      }
+    }
+  }, [loadMore, hasMore, isLoading])
+
+  // Reset quando muda o filtro
+  useEffect(() => {
+    setRumors(initialRumors)
+    setOffset(initialRumors.length)
+    setHasMore(true)
+  }, [filtro, initialRumors])
 
   return (
     <>
@@ -454,6 +586,11 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
         }
 
         ::-webkit-scrollbar { width: 8px; }
@@ -705,15 +842,34 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
           {/* Lista de Rumores */}
           <div>
             {rumors.length > 0 ? (
-              rumors.map(rumor => (
-                <RumorCard
-                  key={rumor.id}
-                  rumor={rumor}
-                  userId={user?.id}
-                  userPrediction={userPredictions.get(rumor.id)}
-                  onVote={handleVote}
-                />
-              ))
+              <>
+                {rumors.map(rumor => (
+                  <RumorCard
+                    key={rumor.id}
+                    rumor={rumor}
+                    userId={user?.id}
+                    userPrediction={userPredictions.get(rumor.id)}
+                  />
+                ))}
+
+                {/* Loading indicator / Trigger para scroll infinito */}
+                <div ref={loadMoreRef} style={{ padding: '20px', textAlign: 'center' }}>
+                  {isLoading ? (
+                    <>
+                      <SkeletonCard />
+                      <SkeletonCard />
+                    </>
+                  ) : hasMore ? (
+                    <span style={{ color: COLORS.textMuted, fontSize: '13px' }}>
+                      Carregando mais...
+                    </span>
+                  ) : (
+                    <span style={{ color: COLORS.textMuted, fontSize: '13px' }}>
+                      Você viu todos os rumores! 🎉
+                    </span>
+                  )}
+                </div>
+              </>
             ) : (
               <div style={{
                 padding: '60px 20px',
