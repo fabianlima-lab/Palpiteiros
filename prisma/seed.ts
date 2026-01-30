@@ -4,6 +4,9 @@ const prisma = new PrismaClient()
 
 async function main() {
   // Limpar dados existentes
+  await prisma.rumorNewsItem.deleteMany()
+  await prisma.rumorSignal.deleteMany()
+  await prisma.newsItem.deleteMany()
   await prisma.signal.deleteMany()
   await prisma.prediction.deleteMany()
   await prisma.socialPost.deleteMany()
