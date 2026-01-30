@@ -175,7 +175,15 @@ export default function OnboardingPage() {
     if (step < TOTAL_STEPS) {
       setStep(step + 1)
     } else {
-      router.push('/home')
+      // Salvar dados no localStorage para uso posterior
+      localStorage.setItem('palpiteiro_user', JSON.stringify({
+        team: selectedTeam,
+        username,
+        avatar: uploadedPhoto || profilePhoto,
+        categories: selectedCategories,
+        players: selectedPlayers,
+      }))
+      router.push('/feed')
     }
   }
 
@@ -183,7 +191,14 @@ export default function OnboardingPage() {
     if (step < TOTAL_STEPS) {
       setStep(step + 1)
     } else {
-      router.push('/home')
+      localStorage.setItem('palpiteiro_user', JSON.stringify({
+        team: selectedTeam,
+        username,
+        avatar: uploadedPhoto || profilePhoto,
+        categories: selectedCategories,
+        players: selectedPlayers,
+      }))
+      router.push('/feed')
     }
   }
 
