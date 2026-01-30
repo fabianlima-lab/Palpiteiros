@@ -1,19 +1,20 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import RumorCarousel from '@/app/components/RumorCarousel'
 
 const TEAMS = [
-  { id: 'flamengo', name: 'Flamengo', badge: 'https://logodetimes.com/times/flamengo/logo-flamengo-256.png' },
-  { id: 'corinthians', name: 'Corinthians', badge: 'https://logodetimes.com/times/corinthians/logo-corinthians-256.png' },
-  { id: 'palmeiras', name: 'Palmeiras', badge: 'https://logodetimes.com/times/palmeiras/logo-palmeiras-256.png' },
-  { id: 'santos', name: 'Santos', badge: 'https://logodetimes.com/times/santos/logo-santos-256.png' },
-  { id: 'sao-paulo', name: 'São Paulo', badge: 'https://logodetimes.com/times/sao-paulo/logo-sao-paulo-256.png' },
-  { id: 'botafogo', name: 'Botafogo', badge: 'https://logodetimes.com/times/botafogo/logo-botafogo-256.png' },
-  { id: 'fluminense', name: 'Fluminense', badge: 'https://logodetimes.com/times/fluminense/logo-fluminense-256.png' },
-  { id: 'vasco', name: 'Vasco', badge: 'https://logodetimes.com/times/vasco-da-gama/logo-vasco-da-gama-256.png' },
-  { id: 'atletico-mg', name: 'Atlético-MG', badge: 'https://logodetimes.com/times/atletico-mineiro/logo-atletico-mineiro-256.png' },
-  { id: 'cruzeiro', name: 'Cruzeiro', badge: 'https://logodetimes.com/times/cruzeiro/logo-cruzeiro-256.png' },
-  { id: 'internacional', name: 'Inter', badge: 'https://logodetimes.com/times/internacional/logo-internacional-256.png' },
-  { id: 'gremio', name: 'Grêmio', badge: 'https://logodetimes.com/times/gremio/logo-gremio-256.png' },
+  { id: 'flamengo', name: 'Flamengo', badge: 'https://logodetimes.com/times/flamengo/logo-flamengo-256.png', color: '#D62828' },
+  { id: 'corinthians', name: 'Corinthians', badge: 'https://logodetimes.com/times/corinthians/logo-corinthians-256.png', color: '#1A1A1A' },
+  { id: 'palmeiras', name: 'Palmeiras', badge: 'https://logodetimes.com/times/palmeiras/logo-palmeiras-256.png', color: '#2D6A4F' },
+  { id: 'santos', name: 'Santos', badge: 'https://logodetimes.com/times/santos/logo-santos-256.png', color: '#6B7280' },
+  { id: 'sao-paulo', name: 'São Paulo', badge: 'https://logodetimes.com/times/sao-paulo/logo-sao-paulo-256.png', color: '#DC2626' },
+  { id: 'botafogo', name: 'Botafogo', badge: 'https://logodetimes.com/times/botafogo/logo-botafogo-256.png', color: '#1A1A1A' },
+  { id: 'fluminense', name: 'Fluminense', badge: 'https://logodetimes.com/times/fluminense/logo-fluminense-256.png', color: '#7F1D1D' },
+  { id: 'vasco', name: 'Vasco', badge: 'https://logodetimes.com/times/vasco-da-gama/logo-vasco-da-gama-256.png', color: '#1A1A1A' },
+  { id: 'atletico-mg', name: 'Atlético-MG', badge: 'https://logodetimes.com/times/atletico-mineiro/logo-atletico-mineiro-256.png', color: '#1A1A1A' },
+  { id: 'cruzeiro', name: 'Cruzeiro', badge: 'https://logodetimes.com/times/cruzeiro/logo-cruzeiro-256.png', color: '#1E3A8A' },
+  { id: 'internacional', name: 'Inter', badge: 'https://logodetimes.com/times/internacional/logo-internacional-256.png', color: '#DC2626' },
+  { id: 'gremio', name: 'Grêmio', badge: 'https://logodetimes.com/times/gremio/logo-gremio-256.png', color: '#1E40AF' },
 ]
 
 // Cores neutras do Palpiteiro (não associadas a nenhum time)
@@ -39,6 +40,21 @@ export default async function LandingPage() {
     },
     orderBy: { createdAt: 'desc' },
     take: 3,
+  })
+
+  // Buscar rumores em destaque para o carrossel (os 5 com mais palpites)
+  const featuredRumors = await prisma.rumor.findMany({
+    where: { status: 'ACTIVE' },
+    include: {
+      signals: true,
+      predictions: true,
+    },
+    orderBy: {
+      predictions: {
+        _count: 'desc'
+      }
+    },
+    take: 5,
   })
 
   const totalPredictions = await prisma.prediction.count()
@@ -127,7 +143,15 @@ export default async function LandingPage() {
           Começar agora — é grátis
         </Link>
 
-        {/* Social proof */}
+        {/* Carrossel de Rumores em Destaque */}
+        <RumorCarousel rumors={featuredRumors.map(r => ({
+          id: r.id,
+          title: r.title,
+          predictions: r.predictions.map(p => ({ id: p.id })),
+          signals: r.signals.map(s => ({ signal: s.signal }))
+        }))} />
+
+        {/* Social proof - COMENTADO: reativar quando tiver +100 usuários
         <div style={{
           display: 'flex',
           justifyContent: 'center',
@@ -154,6 +178,7 @@ export default async function LandingPage() {
             <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '2px' }}>times</div>
           </div>
         </div>
+        */}
       </section>
 
       <div style={{ padding: '32px 20px', maxWidth: '600px', margin: '0 auto' }}>
@@ -256,6 +281,7 @@ export default async function LandingPage() {
                 style={{
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
                   border: '1px solid rgba(255,255,255,0.08)',
+                  borderLeft: `3px solid ${team.color}`,
                   borderRadius: '14px',
                   padding: '12px 8px',
                   textAlign: 'center',
@@ -459,14 +485,18 @@ export default async function LandingPage() {
           </Link>
         </section>
 
-        {/* Footer simples */}
-        <footer style={{ textAlign: 'center', padding: '24px 0', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginBottom: '16px' }}>
-            <Link href="/faq" style={{ color: '#6b7280', fontSize: '13px', textDecoration: 'none' }}>FAQ</Link>
-            <Link href="/politicas" style={{ color: '#6b7280', fontSize: '13px', textDecoration: 'none' }}>Políticas</Link>
+        {/* Footer */}
+        <footer style={{ textAlign: 'center', padding: '32px 0', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '24px', marginBottom: '16px', flexWrap: 'wrap' }}>
+            <Link href="/faq" style={{ color: '#9ca3af', fontSize: '13px', textDecoration: 'none' }}>FAQ</Link>
+            <Link href="/politicas" style={{ color: '#9ca3af', fontSize: '13px', textDecoration: 'none' }}>Políticas</Link>
+            <Link href="/empresas" style={{ color: '#9ca3af', fontSize: '13px', textDecoration: 'none' }}>Para Empresas</Link>
           </div>
-          <p style={{ fontSize: '12px', color: '#4b5563' }}>
-            © 2025 Palpiteiro. Apenas entretenimento.
+          <p style={{ fontSize: '13px', color: '#6b7280', marginBottom: '8px' }}>
+            Feito para torcedores, por torcedores.
+          </p>
+          <p style={{ fontSize: '11px', color: '#4b5563' }}>
+            © 2025 Palpiteiro
           </p>
         </footer>
       </div>
