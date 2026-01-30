@@ -47,27 +47,29 @@ export function Header({ title, showBack = false }: HeaderProps) {
             <span style={{ fontSize: '16px', fontWeight: '600' }}>{title || 'Voltar'}</span>
           </button>
         ) : (
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{
-                width: '36px',
-                height: '36px',
-                background: 'linear-gradient(135deg, #8B0000, #000)',
-                borderRadius: '10px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px'
-              }}>🔴</div>
-              <span style={{
-                fontSize: '20px',
-                fontWeight: '700',
-                background: 'linear-gradient(135deg, #ff1744, #fff)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent'
-              }}>Palpiteiro</span>
-            </div>
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <Link href="/" style={{ textDecoration: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div style={{
+                  width: '36px',
+                  height: '36px',
+                  background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
+                  borderRadius: '10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '18px'
+                }}>⚽</div>
+                <span style={{
+                  fontSize: '20px',
+                  fontWeight: '700',
+                  background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}>Palpiteiro</span>
+              </div>
+            </Link>
+          </div>
         )}
 
         <Link href="/perfil" style={{

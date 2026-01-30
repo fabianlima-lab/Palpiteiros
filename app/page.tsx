@@ -2,18 +2,18 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 
 const TEAMS = [
-  { id: 'flamengo', name: 'Flamengo', emoji: '🔴⚫' },
-  { id: 'corinthians', name: 'Corinthians', emoji: '⚫⚪' },
-  { id: 'palmeiras', name: 'Palmeiras', emoji: '💚' },
-  { id: 'santos', name: 'Santos', emoji: '⚪⚫' },
-  { id: 'sao-paulo', name: 'São Paulo', emoji: '🔴⚪⚫' },
-  { id: 'botafogo', name: 'Botafogo', emoji: '⭐⚫' },
-  { id: 'fluminense', name: 'Fluminense', emoji: '🟢🟣⚪' },
-  { id: 'vasco', name: 'Vasco', emoji: '⚫⚪' },
-  { id: 'atletico-mg', name: 'Atlético-MG', emoji: '⚫⚪' },
-  { id: 'cruzeiro', name: 'Cruzeiro', emoji: '💙' },
-  { id: 'internacional', name: 'Inter', emoji: '🔴⚪' },
-  { id: 'gremio', name: 'Grêmio', emoji: '💙🖤⚪' },
+  { id: 'flamengo', name: 'Flamengo', badge: 'https://logodetimes.com/times/flamengo/logo-flamengo-256.png' },
+  { id: 'corinthians', name: 'Corinthians', badge: 'https://logodetimes.com/times/corinthians/logo-corinthians-256.png' },
+  { id: 'palmeiras', name: 'Palmeiras', badge: 'https://logodetimes.com/times/palmeiras/logo-palmeiras-256.png' },
+  { id: 'santos', name: 'Santos', badge: 'https://logodetimes.com/times/santos/logo-santos-256.png' },
+  { id: 'sao-paulo', name: 'São Paulo', badge: 'https://logodetimes.com/times/sao-paulo/logo-sao-paulo-256.png' },
+  { id: 'botafogo', name: 'Botafogo', badge: 'https://logodetimes.com/times/botafogo/logo-botafogo-256.png' },
+  { id: 'fluminense', name: 'Fluminense', badge: 'https://logodetimes.com/times/fluminense/logo-fluminense-256.png' },
+  { id: 'vasco', name: 'Vasco', badge: 'https://logodetimes.com/times/vasco-da-gama/logo-vasco-da-gama-256.png' },
+  { id: 'atletico-mg', name: 'Atlético-MG', badge: 'https://logodetimes.com/times/atletico-mineiro/logo-atletico-mineiro-256.png' },
+  { id: 'cruzeiro', name: 'Cruzeiro', badge: 'https://logodetimes.com/times/cruzeiro/logo-cruzeiro-256.png' },
+  { id: 'internacional', name: 'Inter', badge: 'https://logodetimes.com/times/internacional/logo-internacional-256.png' },
+  { id: 'gremio', name: 'Grêmio', badge: 'https://logodetimes.com/times/gremio/logo-gremio-256.png' },
 ]
 
 // Cores neutras do Palpiteiro (não associadas a nenhum time)
@@ -257,19 +257,36 @@ export default async function LandingPage() {
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)',
                   border: '1px solid rgba(255,255,255,0.08)',
                   borderRadius: '14px',
-                  padding: '16px 8px',
+                  padding: '12px 8px',
                   textAlign: 'center',
                   textDecoration: 'none',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 <div style={{
-                  fontSize: '28px',
-                  marginBottom: '8px',
-                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
-                }}>{team.emoji}</div>
+                  width: '48px',
+                  height: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: '8px'
+                }}>
+                  <img
+                    src={team.badge}
+                    alt={team.name}
+                    style={{
+                      maxWidth: '100%',
+                      maxHeight: '100%',
+                      objectFit: 'contain'
+                    }}
+                  />
+                </div>
                 <div style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: '600',
                   color: '#e5e7eb',
                   whiteSpace: 'nowrap',
