@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface HeaderProps {
   title?: string
@@ -8,6 +9,8 @@ interface HeaderProps {
 }
 
 export function Header({ title, showBack = false }: HeaderProps) {
+  const router = useRouter()
+
   return (
     <header style={{
       position: 'sticky',
@@ -27,36 +30,44 @@ export function Header({ title, showBack = false }: HeaderProps) {
         margin: '0 auto'
       }}>
         {showBack ? (
-          <Link href="/home" style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            textDecoration: 'none',
-            color: '#fff'
-          }}>
-            <span style={{ fontSize: '18px' }}>←</span>
-            <span style={{ fontSize: '16px', fontWeight: '600' }}>{title || 'Voltar'}</span>
-          </Link>
-        ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              background: 'linear-gradient(135deg, #8B0000, #000)',
-              borderRadius: '10px',
+          <button
+            onClick={() => router.back()}
+            style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px'
-            }}>🔴</div>
-            <span style={{
-              fontSize: '20px',
-              fontWeight: '700',
-              background: 'linear-gradient(135deg, #ff1744, #fff)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>Palpiteiro</span>
-          </div>
+              gap: '8px',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: '#fff',
+              padding: 0
+            }}
+          >
+            <span style={{ fontSize: '18px' }}>←</span>
+            <span style={{ fontSize: '16px', fontWeight: '600' }}>{title || 'Voltar'}</span>
+          </button>
+        ) : (
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div style={{
+                width: '36px',
+                height: '36px',
+                background: 'linear-gradient(135deg, #8B0000, #000)',
+                borderRadius: '10px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '18px'
+              }}>🔴</div>
+              <span style={{
+                fontSize: '20px',
+                fontWeight: '700',
+                background: 'linear-gradient(135deg, #ff1744, #fff)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent'
+              }}>Palpiteiro</span>
+            </div>
+          </Link>
         )}
 
         <Link href="/perfil" style={{

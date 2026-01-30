@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface PremiumPopupProps {
   teamName: string
@@ -8,13 +9,19 @@ interface PremiumPopupProps {
 }
 
 export function PremiumPopup({ teamName, onClose }: PremiumPopupProps) {
+  const router = useRouter()
   const [isClosing, setIsClosing] = useState(false)
 
   const handleClose = () => {
     setIsClosing(true)
     setTimeout(() => {
-      onClose?.()
+      // Redireciona para a home em vez de permitir acesso ao conteúdo bloqueado
+      router.push('/home')
     }, 300)
+  }
+
+  const handleStartTrial = () => {
+    router.push('/pagamento')
   }
 
   return (
@@ -56,7 +63,7 @@ export function PremiumPopup({ teamName, onClose }: PremiumPopupProps) {
         <h2 style={{ fontSize: '20px', fontWeight: '700', color: '#fff', marginBottom: '8px' }}>
           Desbloqueie o{' '}
           <span style={{
-            background: 'linear-gradient(135deg, #ff1744, #fff)',
+            background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent'
           }}>{teamName}</span>
@@ -88,15 +95,15 @@ export function PremiumPopup({ teamName, onClose }: PremiumPopupProps) {
         </div>
 
         <div style={{
-          background: 'linear-gradient(135deg, #2a1515 0%, #1a0a0a 100%)',
-          border: '1px solid #4a2020',
+          background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(6, 182, 212, 0.1) 100%)',
+          border: '1px solid rgba(139, 92, 246, 0.3)',
           borderRadius: '12px',
           padding: '16px',
           marginBottom: '16px'
         }}>
           <div style={{
             display: 'inline-block',
-            background: '#ff1744',
+            background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
             color: 'white',
             padding: '4px 12px',
             borderRadius: '20px',
@@ -108,24 +115,28 @@ export function PremiumPopup({ teamName, onClose }: PremiumPopupProps) {
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '4px', marginBottom: '4px' }}>
             <span style={{ fontSize: '16px', color: '#a0a0b0' }}>R$</span>
-            <span style={{ fontSize: '40px', fontWeight: '800', color: '#ff1744' }}>49</span>
+            <span style={{ fontSize: '40px', fontWeight: '800', color: '#8b5cf6' }}>49</span>
             <span style={{ fontSize: '14px', color: '#666680' }}>/mês</span>
           </div>
           <p style={{ fontSize: '11px', color: '#666680', margin: 0 }}>Cancele quando quiser</p>
         </div>
 
-        <button style={{
-          width: '100%',
-          padding: '14px',
-          background: 'linear-gradient(135deg, #ff1744, #8B0000)',
-          border: 'none',
-          borderRadius: '12px',
-          color: 'white',
-          fontSize: '15px',
-          fontWeight: '700',
-          cursor: 'pointer',
-          marginBottom: '12px'
-        }}>
+        <button
+          onClick={handleStartTrial}
+          style={{
+            width: '100%',
+            padding: '14px',
+            background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)',
+            border: 'none',
+            borderRadius: '12px',
+            color: 'white',
+            fontSize: '15px',
+            fontWeight: '700',
+            cursor: 'pointer',
+            marginBottom: '12px',
+            boxShadow: '0 4px 20px rgba(139, 92, 246, 0.4)'
+          }}
+        >
           Começar teste grátis
         </button>
 
@@ -141,7 +152,7 @@ export function PremiumPopup({ teamName, onClose }: PremiumPopupProps) {
             cursor: 'pointer'
           }}
         >
-          Continuar sem Premium
+          Voltar para início
         </button>
       </div>
     </div>

@@ -131,7 +131,7 @@ export function RumorCard({
               flex: 1,
               padding: '12px',
               borderRadius: '10px',
-              border: 'none',
+              border: hasVoted && localPrediction === true ? '1px solid #00f5a0' : '1px solid transparent',
               fontSize: '13px',
               fontWeight: '600',
               cursor: hasVoted ? 'default' : 'pointer',
@@ -144,8 +144,7 @@ export function RumorCard({
                 ? localPrediction === true
                   ? '#00f5a0'
                   : '#666680'
-                : '#00f5a0',
-              border: hasVoted && localPrediction === true ? '1px solid #00f5a0' : '1px solid transparent'
+                : '#00f5a0'
             }}
           >
             👍 Favorável
@@ -157,7 +156,7 @@ export function RumorCard({
               flex: 1,
               padding: '12px',
               borderRadius: '10px',
-              border: 'none',
+              border: hasVoted && localPrediction === false ? '1px solid #ff1744' : '1px solid transparent',
               fontSize: '13px',
               fontWeight: '600',
               cursor: hasVoted ? 'default' : 'pointer',
@@ -170,8 +169,7 @@ export function RumorCard({
                 ? localPrediction === false
                   ? '#ff1744'
                   : '#666680'
-                : '#ff1744',
-              border: hasVoted && localPrediction === false ? '1px solid #ff1744' : '1px solid transparent'
+                : '#ff1744'
             }}
           >
             👎 Desfavorável

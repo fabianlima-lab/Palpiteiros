@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Header } from '../components/Header'
 import { BottomNav } from '../components/BottomNav'
 import { RumorCard } from '../components/RumorCard'
+import { SmartSearch } from '../components/SmartSearch'
 
 export default async function ExplorarPage() {
   const rumors = await prisma.rumor.findMany({
@@ -34,30 +35,9 @@ export default async function ExplorarPage() {
       <Header title="Explorar" />
 
       <div style={{ padding: '16px', maxWidth: '800px', margin: '0 auto' }}>
-        {/* Search Bar */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px',
-          backgroundColor: '#16162a',
-          border: '1px solid #2a2a3e',
-          borderRadius: '12px',
-          padding: '12px 16px',
-          marginBottom: '16px'
-        }}>
-          <span style={{ fontSize: '16px', color: '#666680' }}>🔍</span>
-          <input
-            type="text"
-            placeholder="Buscar jogadores, times..."
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: 'none',
-              outline: 'none',
-              color: '#fff',
-              fontSize: '14px'
-            }}
-          />
+        {/* Smart Search Bar */}
+        <div style={{ marginBottom: '16px' }}>
+          <SmartSearch placeholder="Buscar jogadores, times, rumores..." />
         </div>
 
         {/* Categories */}
