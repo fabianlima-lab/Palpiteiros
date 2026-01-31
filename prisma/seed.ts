@@ -17,179 +17,195 @@ async function main() {
   await prisma.notification.deleteMany()
   await prisma.user.deleteMany()
 
+  console.log('🧹 Dados limpos')
+
   // Criar badges
   const badges = await Promise.all([
-    prisma.badge.create({
-      data: { name: 'Novato', description: 'Fez seu primeiro palpite', emoji: '🎯' },
-    }),
-    prisma.badge.create({
-      data: { name: 'Vidente', description: 'Acertou 10 palpites', emoji: '🔮' },
-    }),
-    prisma.badge.create({
-      data: { name: 'Mestre dos Rumores', description: 'Acertou 50 palpites', emoji: '👑' },
-    }),
-    prisma.badge.create({
-      data: { name: 'Flamenguista', description: 'Torcedor do Mengão', emoji: '🔴⚫' },
-    }),
-    prisma.badge.create({
-      data: { name: 'Premium', description: 'Assinante premium', emoji: '⭐' },
-    }),
+    prisma.badge.create({ data: { name: 'Novato', description: 'Fez seu primeiro palpite', emoji: '🎯' } }),
+    prisma.badge.create({ data: { name: 'Vidente', description: 'Acertou 10 palpites', emoji: '🔮' } }),
+    prisma.badge.create({ data: { name: 'Mestre dos Rumores', description: 'Acertou 50 palpites', emoji: '👑' } }),
+    prisma.badge.create({ data: { name: 'Flamenguista', description: 'Torcedor do Mengão', emoji: '🔴⚫' } }),
+    prisma.badge.create({ data: { name: 'Premium', description: 'Assinante premium', emoji: '⭐' } }),
   ])
+  console.log('🏅 Badges criados')
 
   // Criar usuários
   const users = await Promise.all([
-    prisma.user.create({
-      data: {
-        name: 'Torcedor Demo',
-        username: 'torcedor_demo',
-        team: 'Flamengo',
-        points: 1430,
-        level: 5,
-        isPremium: false,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Maria Silva',
-        username: 'maria_fla',
-        team: 'Flamengo',
-        points: 980,
-        level: 4,
-        isPremium: true,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'João Santos',
-        username: 'joao_peixe',
-        team: 'Santos',
-        points: 1250,
-        level: 5,
-        isPremium: false,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Pedro Corinthiano',
-        username: 'pedrao_sccp',
-        team: 'Corinthians',
-        points: 890,
-        level: 3,
-        isPremium: false,
-      },
-    }),
-    prisma.user.create({
-      data: {
-        name: 'Ana Palmeirense',
-        username: 'ana_verdao',
-        team: 'Palmeiras',
-        points: 1100,
-        level: 4,
-        isPremium: true,
-      },
-    }),
+    prisma.user.create({ data: { name: 'Torcedor Demo', username: 'torcedor_demo', team: 'Flamengo', points: 1430, level: 5, isPremium: false } }),
+    prisma.user.create({ data: { name: 'Maria Silva', username: 'maria_fla', team: 'Flamengo', points: 980, level: 4, isPremium: true } }),
+    prisma.user.create({ data: { name: 'João Santos', username: 'joao_peixe', team: 'Santos', points: 1250, level: 5, isPremium: false } }),
+    prisma.user.create({ data: { name: 'Pedro Corinthiano', username: 'pedrao_sccp', team: 'Corinthians', points: 890, level: 3, isPremium: false } }),
+    prisma.user.create({ data: { name: 'Ana Palmeirense', username: 'ana_verdao', team: 'Palmeiras', points: 1100, level: 4, isPremium: true } }),
   ])
+  console.log('👥 Usuários criados')
 
-  // Criar influenciadores
+  // Criar influenciadores (jornalistas reais do futebol brasileiro)
   const vene = await prisma.influencer.create({
     data: {
-      name: 'Venê Casagrande',
-      username: 'venaborges',
-      outlet: 'O Globo / SporTV',
+      name: 'Venê Casagrande', username: 'venaborges', outlet: 'O Globo / SporTV',
       bio: 'Jornalista esportivo com mais de 15 anos cobrindo futebol brasileiro.',
-      trustScore: 0.92,
-      totalHits: 47,
-      totalMisses: 4,
-      followers: 850000,
-      twitter: 'https://twitter.com/venaborges',
+      trustScore: 0.92, totalHits: 87, totalMisses: 12, followers: 520000, twitter: '@venaborges',
     },
   })
-
   const raisa = await prisma.influencer.create({
     data: {
-      name: 'Raisa Simplicio',
-      username: 'rfraisinha',
-      outlet: 'TNT Sports',
-      bio: 'Repórter da TNT Sports. Cobertura diária do Flamengo.',
-      trustScore: 0.88,
-      totalHits: 35,
-      totalMisses: 5,
-      followers: 420000,
-      twitter: 'https://twitter.com/rfraisinha',
+      name: 'Raisa Simplicio', username: 'rfraisinha', outlet: 'TNT Sports',
+      bio: 'Setorista do Flamengo e comentarista.',
+      trustScore: 0.88, totalHits: 65, totalMisses: 15, followers: 380000, twitter: '@rfraisinha',
     },
   })
-
-  const marcelo = await prisma.influencer.create({
+  const bechler = await prisma.influencer.create({
     data: {
-      name: 'Marcelo Bechler',
-      username: 'marcelobechler',
-      outlet: 'ESPN Brasil',
-      bio: 'Correspondente internacional da ESPN.',
-      trustScore: 0.95,
-      totalHits: 62,
-      totalMisses: 3,
-      followers: 1200000,
-      twitter: 'https://twitter.com/marcelobechler',
+      name: 'Marcelo Bechler', username: 'marcelobechler', outlet: 'ESPN Brasil',
+      bio: 'Especialista em transferências internacionais.',
+      trustScore: 0.95, totalHits: 112, totalMisses: 8, followers: 890000, twitter: '@marcelobechler',
     },
   })
-
-  const jorge = await prisma.influencer.create({
+  const nicola = await prisma.influencer.create({
     data: {
-      name: 'Jorge Nicola',
-      username: 'jorgenicola',
-      outlet: 'Yahoo Esportes',
-      bio: 'Especialista em finanças do futebol.',
-      trustScore: 0.78,
-      totalHits: 28,
-      totalMisses: 8,
-      followers: 380000,
-      youtube: 'https://youtube.com/@jorgenicola',
+      name: 'Jorge Nicola', username: 'jorgenicola', outlet: 'Yahoo Esportes',
+      bio: 'Jornalista de mercado da bola.',
+      trustScore: 0.78, totalHits: 56, totalMisses: 22, followers: 420000, twitter: '@jorgenicola',
     },
   })
-
   const flazoeiro = await prisma.influencer.create({
     data: {
-      name: 'Flazoeiro',
-      username: 'flazoeiro',
-      outlet: 'Canal Flazoeiro',
-      bio: 'Maior canal do Flamengo no YouTube.',
-      trustScore: 0.72,
-      totalHits: 22,
-      totalMisses: 9,
-      followers: 950000,
-      youtube: 'https://youtube.com/@flazoeiro',
+      name: 'Flazoeiro', username: 'flazoeiro', outlet: 'Canal Flazoeiro',
+      bio: 'Maior canal de notícias do Flamengo no YouTube.',
+      trustScore: 0.72, totalHits: 45, totalMisses: 25, followers: 1200000, twitter: '@flazoeiro',
     },
   })
+  const mauro = await prisma.influencer.create({
+    data: {
+      name: 'Mauro Cezar', username: 'maurocezar', outlet: 'UOL / Jovem Pan',
+      bio: 'Comentarista esportivo e jornalista.',
+      trustScore: 0.82, totalHits: 68, totalMisses: 18, followers: 750000, twitter: '@maurocezar',
+    },
+  })
+  console.log('📰 Influenciadores criados')
 
-  // Criar rumores variados
+  // =====================================
+  // RUMORES - Janeiro/Fevereiro 2026
+  // Foco em rumores ATUAIS e RELEVANTES
+  // Prioridade para Flamengo (time do usuário)
+  // =====================================
+
   const rumors = await Promise.all([
-    // ===== SELEÇÃO BRASILEIRA =====
+    // ===== FLAMENGO (5 rumores - maior prioridade) =====
     prisma.rumor.create({
       data: {
-        playerName: 'Neymar',
-        fromTeam: 'Santos',
-        toTeam: 'Seleção Brasileira',
-        title: 'Neymar joga a Copa do Mundo 2026?',
-        description: 'Craque está de volta ao Santos e busca recuperar forma física para o Mundial.',
-        category: 'selecao',
-        sentiment: 0.75,
+        playerName: 'Claudinho',
+        fromTeam: 'Zenit',
+        toTeam: 'Flamengo',
+        title: 'Claudinho volta ao Brasil pelo Flamengo?',
+        description: 'Meia do Zenit estaria em conversas avançadas com o Rubro-Negro para retorno ao futebol brasileiro.',
+        category: 'transferencia',
+        sentiment: 0.65,
         status: 'open',
-        signalScore: 0.6,
-        closesAt: new Date('2026-06-01'),
+        signalScore: 0.72,
+        closesAt: new Date('2026-02-15'),
       },
     }),
     prisma.rumor.create({
       data: {
-        playerName: 'Kaio Jorge',
-        fromTeam: 'Juventus',
-        toTeam: 'Seleção Brasileira',
-        title: 'Kaio Jorge na próxima convocação da Seleção?',
-        description: 'Atacante vive boa fase na Juventus e pode ganhar chance com Dorival.',
-        category: 'selecao',
+        playerName: 'Flamengo',
+        fromTeam: null,
+        toTeam: 'Flamengo',
+        title: 'Flamengo vence a Supercopa 2026?',
+        description: 'Rubro-negro enfrenta o Botafogo na decisão da Supercopa do Brasil dia 9 de fevereiro.',
+        category: 'titulo',
+        sentiment: 0.58,
+        status: 'open',
+        signalScore: 0.55,
+        closesAt: new Date('2026-02-09'),
+      },
+    }),
+    prisma.rumor.create({
+      data: {
+        playerName: 'Filipe Luís',
+        fromTeam: null,
+        toTeam: 'Flamengo',
+        title: 'Filipe Luís permanece no Flamengo em 2026?',
+        description: 'Técnico teria sido sondado por clubes europeus mas deve seguir no comando do Mengão.',
+        category: 'tecnico',
+        sentiment: 0.82,
+        status: 'open',
+        signalScore: 0.85,
+        closesAt: new Date('2026-03-01'),
+      },
+    }),
+    prisma.rumor.create({
+      data: {
+        playerName: 'Dudu',
+        fromTeam: 'Palmeiras',
+        toTeam: 'Flamengo',
+        title: 'Dudu troca o Palmeiras pelo Flamengo?',
+        description: 'Atacante estaria insatisfeito no Verdão e Flamengo monitora situação.',
+        category: 'transferencia',
+        sentiment: 0.32,
+        status: 'open',
+        signalScore: 0.25,
+        closesAt: new Date('2026-07-01'),
+      },
+    }),
+    prisma.rumor.create({
+      data: {
+        playerName: 'Gerson',
+        fromTeam: 'Marseille',
+        toTeam: 'Flamengo',
+        title: 'Gerson volta ao Flamengo em 2026?',
+        description: 'Coringa da torcida pode retornar ao clube após passagem na França.',
+        category: 'transferencia',
         sentiment: 0.45,
         status: 'open',
-        signalScore: 0.3,
-        closesAt: new Date('2026-03-15'),
+        signalScore: 0.38,
+        closesAt: new Date('2026-06-30'),
+      },
+    }),
+
+    // ===== PALMEIRAS =====
+    prisma.rumor.create({
+      data: {
+        playerName: 'Vitor Roque',
+        fromTeam: 'Barcelona',
+        toTeam: 'Palmeiras',
+        title: 'Vitor Roque retorna ao Palmeiras?',
+        description: 'Atacante não se firmou no Barcelona e pode voltar ao Verdão por empréstimo.',
+        category: 'transferencia',
+        sentiment: 0.45,
+        status: 'open',
+        signalScore: 0.38,
+        closesAt: new Date('2026-02-28'),
+      },
+    }),
+    prisma.rumor.create({
+      data: {
+        playerName: 'Palmeiras',
+        fromTeam: null,
+        toTeam: 'Palmeiras',
+        title: 'Palmeiras é tricampeão brasileiro em 2026?',
+        description: 'Verdão busca o terceiro título consecutivo do Brasileirão.',
+        category: 'titulo',
+        sentiment: 0.52,
+        status: 'open',
+        signalScore: 0.48,
+        closesAt: new Date('2026-12-08'),
+      },
+    }),
+
+    // ===== CORINTHIANS =====
+    prisma.rumor.create({
+      data: {
+        playerName: 'Memphis Depay',
+        fromTeam: 'Corinthians',
+        toTeam: 'Europa',
+        title: 'Memphis Depay deixa o Corinthians no meio do ano?',
+        description: 'Holandês pode retornar à Europa se receber proposta após o Mundial de Clubes.',
+        category: 'transferencia',
+        sentiment: 0.42,
+        status: 'open',
+        signalScore: 0.35,
+        closesAt: new Date('2026-07-15'),
       },
     }),
     prisma.rumor.create({
@@ -198,28 +214,42 @@ async function main() {
         fromTeam: 'Corinthians',
         toTeam: 'Seleção Brasileira',
         title: 'Breno Bidon será convocado para a Copa do Mundo?',
-        description: 'Jovem volante do Corinthians impressiona e entra no radar da Seleção.',
+        description: 'Jovem volante do Corinthians impressiona e entra no radar de Dorival Jr.',
         category: 'selecao',
         sentiment: 0.38,
         status: 'open',
-        signalScore: 0.25,
-        closesAt: new Date('2026-05-01'),
+        signalScore: 0.32,
+        closesAt: new Date('2026-05-15'),
       },
     }),
 
-    // ===== CRUZEIRO =====
+    // ===== SANTOS =====
     prisma.rumor.create({
       data: {
-        playerName: 'Tite',
-        fromTeam: 'Sem clube',
-        toTeam: 'Cruzeiro',
-        title: 'Tite permanece no Cruzeiro até o fim do ano?',
-        description: 'Treinador enfrenta pressão após resultados irregulares.',
-        category: 'tecnico',
-        sentiment: 0.52,
+        playerName: 'Neymar',
+        fromTeam: 'Santos',
+        toTeam: 'Seleção Brasileira',
+        title: 'Neymar joga a Copa do Mundo 2026?',
+        description: 'Craque está de volta ao Santos e busca recuperar forma física para o Mundial nos EUA.',
+        category: 'selecao',
+        sentiment: 0.68,
         status: 'open',
-        signalScore: 0.4,
-        closesAt: new Date('2026-12-31'),
+        signalScore: 0.62,
+        closesAt: new Date('2026-06-01'),
+      },
+    }),
+    prisma.rumor.create({
+      data: {
+        playerName: 'Gabigol',
+        fromTeam: 'Cruzeiro',
+        toTeam: 'Santos',
+        title: 'Gabigol troca o Cruzeiro pelo Santos?',
+        description: 'Atacante pode voltar ao clube que o revelou se não emplacar em MG.',
+        category: 'transferencia',
+        sentiment: 0.28,
+        status: 'open',
+        signalScore: 0.22,
+        closesAt: new Date('2026-07-31'),
       },
     }),
 
@@ -230,104 +260,12 @@ async function main() {
         fromTeam: 'Benfica',
         toTeam: 'Botafogo',
         title: 'Arthur Cabral é reforço do Botafogo?',
-        description: 'Atacante brasileiro pode retornar ao país para vestir a camisa alvinegra.',
+        description: 'Atacante brasileiro pode retornar ao país para reforçar o atual campeão.',
         category: 'transferencia',
-        sentiment: 0.62,
+        sentiment: 0.55,
         status: 'open',
-        signalScore: 0.5,
-        closesAt: new Date('2026-02-28'),
-      },
-    }),
-
-    // ===== FLAMENGO =====
-    prisma.rumor.create({
-      data: {
-        playerName: 'Flamengo',
-        fromTeam: null,
-        toTeam: 'Flamengo',
-        title: 'Flamengo vence a Supercopa 2026?',
-        description: 'Rubro-negro enfrenta o Botafogo na decisão da Supercopa do Brasil.',
-        category: 'titulo',
-        sentiment: 0.68,
-        status: 'open',
-        signalScore: 0.55,
-        closesAt: new Date('2026-02-10'),
-      },
-    }),
-
-    // ===== SANTOS =====
-    prisma.rumor.create({
-      data: {
-        playerName: 'Fernando Diniz',
-        fromTeam: 'Sem clube',
-        toTeam: 'Santos',
-        title: 'Fernando Diniz assume o Santos?',
-        description: 'Treinador está em conversas avançadas com o Peixe.',
-        category: 'tecnico',
-        sentiment: 0.35,
-        status: 'open',
-        signalScore: 0.3,
-        closesAt: new Date('2026-01-31'),
-      },
-    }),
-    prisma.rumor.create({
-      data: {
-        playerName: 'Gabigol',
-        fromTeam: 'Cruzeiro',
-        toTeam: 'Santos',
-        title: 'Gabigol troca o Cruzeiro pelo Santos?',
-        description: 'Atacante pode voltar ao clube que o revelou após passagem frustrante em MG.',
-        category: 'transferencia',
-        sentiment: 0.28,
-        status: 'open',
-        signalScore: 0.2,
-        closesAt: new Date('2026-07-31'),
-      },
-    }),
-
-    // ===== PALMEIRAS =====
-    prisma.rumor.create({
-      data: {
-        playerName: 'Palmeiras',
-        fromTeam: null,
-        toTeam: 'Palmeiras',
-        title: 'Palmeiras será tricampeão do Brasileirão?',
-        description: 'Verdão busca o terceiro título consecutivo do Campeonato Brasileiro.',
-        category: 'titulo',
-        sentiment: 0.58,
-        status: 'open',
-        signalScore: 0.45,
-        closesAt: new Date('2026-12-08'),
-      },
-    }),
-    prisma.rumor.create({
-      data: {
-        playerName: 'Estêvão',
-        fromTeam: 'Palmeiras',
-        toTeam: 'Chelsea',
-        title: 'Estêvão vai para o Chelsea em 2026?',
-        description: 'Joia palmeirense já tem acordo com o clube inglês e deve se transferir.',
-        category: 'transferencia',
-        sentiment: 0.88,
-        status: 'open',
-        signalScore: 0.9,
-        closesAt: new Date('2026-07-01'),
-      },
-    }),
-
-    // ===== CORINTHIANS =====
-    prisma.rumor.create({
-      data: {
-        playerName: 'Memphis Depay',
-        fromTeam: 'Corinthians',
-        toTeam: 'Europa',
-        title: 'Memphis Depay sai do Corinthians no meio do ano?',
-        description: 'Atacante holandês pode retornar à Europa após sucesso no Brasil.',
-        category: 'transferencia',
-        sentiment: 0.42,
-        status: 'open',
-        signalScore: 0.35,
-        closesAt: new Date('2026-06-30'),
+        signalScore: 0.48,
+        closesAt: new Date('2026-02-20'),
       },
     }),
 
@@ -340,126 +278,247 @@ async function main() {
         title: 'Lucas Moura se aposenta em 2026?',
         description: 'Ídolo tricolor pode encerrar a carreira no clube do coração.',
         category: 'transferencia',
-        sentiment: 0.55,
+        sentiment: 0.48,
         status: 'open',
-        signalScore: 0.4,
+        signalScore: 0.42,
         closesAt: new Date('2026-12-31'),
       },
     }),
-  ])
 
-  // Criar sinais para os rumores
+    // ===== CRUZEIRO =====
+    prisma.rumor.create({
+      data: {
+        playerName: 'Gabigol',
+        fromTeam: 'Cruzeiro',
+        toTeam: 'Cruzeiro',
+        title: 'Gabigol recupera o bom futebol no Cruzeiro?',
+        description: 'Atacante contratado como grande reforço ainda não correspondeu às expectativas.',
+        category: 'transferencia',
+        sentiment: 0.35,
+        status: 'open',
+        signalScore: 0.28,
+        closesAt: new Date('2026-06-30'),
+      },
+    }),
+  ])
+  console.log(`⚽ ${rumors.length} rumores criados`)
+
+  // Criar sinais dos influenciadores
   await prisma.signal.createMany({
     data: [
-      // Neymar Copa
-      { rumorId: rumors[0].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.8, reasoning: 'Neymar está focado em recuperação. Fontes confirmam dedicação total.', source: 'Twitter' },
-      { rumorId: rumors[0].id, influencerId: marcelo.id, signal: 'favoravel', confidence: 0.7, reasoning: 'Staff da Seleção monitora evolução do jogador de perto.', source: 'ESPN' },
-      { rumorId: rumors[0].id, influencerId: jorge.id, signal: 'desfavoravel', confidence: 0.6, reasoning: 'Histórico de lesões preocupa. Difícil estar 100% para Copa.', source: 'Yahoo' },
+      // Claudinho no Flamengo (índice 0)
+      { rumorId: rumors[0].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.85, reasoning: 'Conversas avançadas, falta acerto salarial.', source: 'O Globo' },
+      { rumorId: rumors[0].id, influencerId: raisa.id, signal: 'favoravel', confidence: 0.78, reasoning: 'Flamengo vê Claudinho como prioridade para o meio.', source: 'TNT Sports' },
+      { rumorId: rumors[0].id, influencerId: flazoeiro.id, signal: 'favoravel', confidence: 0.70, reasoning: 'Torcida aprova e diretoria trabalha forte.', source: 'YouTube' },
 
-      // Kaio Jorge
-      { rumorId: rumors[1].id, influencerId: marcelo.id, signal: 'favoravel', confidence: 0.5, reasoning: 'Dorival gosta do perfil do jogador. Pode ganhar chance.', source: 'ESPN' },
-      { rumorId: rumors[1].id, influencerId: raisa.id, signal: 'desfavoravel', confidence: 0.6, reasoning: 'Concorrência pesada na posição. Endrick e Vini Jr na frente.', source: 'TNT' },
+      // Supercopa Flamengo (índice 1)
+      { rumorId: rumors[1].id, influencerId: mauro.id, signal: 'favoravel', confidence: 0.60, reasoning: 'Flamengo favorito mas Botafogo vem forte.', source: 'UOL' },
+      { rumorId: rumors[1].id, influencerId: flazoeiro.id, signal: 'favoravel', confidence: 0.75, reasoning: 'Elenco confiante e focado no título.', source: 'YouTube' },
 
-      // Breno Bidon
-      { rumorId: rumors[2].id, influencerId: vene.id, signal: 'desfavoravel', confidence: 0.7, reasoning: 'Muito jovem ainda. Copa de 2030 é mais realista.', source: 'O Globo' },
+      // Filipe Luís permanece (índice 2)
+      { rumorId: rumors[2].id, influencerId: raisa.id, signal: 'favoravel', confidence: 0.92, reasoning: 'Técnico já declarou que quer ficar.', source: 'TNT Sports' },
+      { rumorId: rumors[2].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.88, reasoning: 'Diretoria não cogita mudança.', source: 'O Globo' },
 
-      // Tite Cruzeiro
-      { rumorId: rumors[3].id, influencerId: jorge.id, signal: 'favoravel', confidence: 0.55, reasoning: 'Diretoria bancando o trabalho apesar da pressão.', source: 'Yahoo' },
-      { rumorId: rumors[3].id, influencerId: vene.id, signal: 'desfavoravel', confidence: 0.5, reasoning: 'Resultados não vêm. Clima tenso no vestiário.', source: 'O Globo' },
+      // Dudu pro Flamengo (índice 3)
+      { rumorId: rumors[3].id, influencerId: nicola.id, signal: 'desfavoravel', confidence: 0.72, reasoning: 'Palmeiras não libera, salário alto.', source: 'Yahoo' },
+      { rumorId: rumors[3].id, influencerId: mauro.id, signal: 'desfavoravel', confidence: 0.68, reasoning: 'Rivalidade dificulta muito a negociação.', source: 'UOL' },
 
-      // Arthur Cabral Botafogo
-      { rumorId: rumors[4].id, influencerId: marcelo.id, signal: 'favoravel', confidence: 0.65, reasoning: 'Negociação avançada. Benfica aceita liberar.', source: 'ESPN' },
+      // Gerson volta (índice 4)
+      { rumorId: rumors[4].id, influencerId: vene.id, signal: 'neutro', confidence: 0.55, reasoning: 'Flamengo monitora mas não há proposta formal.', source: 'O Globo' },
 
-      // Flamengo Supercopa
-      { rumorId: rumors[5].id, influencerId: flazoeiro.id, signal: 'favoravel', confidence: 0.75, reasoning: 'Time entrosado e motivado. Favoritismo claro!', source: 'YouTube' },
-      { rumorId: rumors[5].id, influencerId: raisa.id, signal: 'favoravel', confidence: 0.6, reasoning: 'Elenco forte e bem preparado para decisão.', source: 'TNT' },
+      // Vitor Roque (índice 5)
+      { rumorId: rumors[5].id, influencerId: bechler.id, signal: 'neutro', confidence: 0.55, reasoning: 'Barcelona avalia empréstimo mas há outros interessados.', source: 'ESPN' },
 
-      // Estêvão Chelsea
-      { rumorId: rumors[9].id, influencerId: marcelo.id, signal: 'favoravel', confidence: 0.95, reasoning: 'Acordo fechado. É questão de tempo.', source: 'ESPN' },
-      { rumorId: rumors[9].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.9, reasoning: 'Contrato assinado, só aguarda completar 18 anos.', source: 'O Globo' },
+      // Palmeiras tricampeão (índice 6)
+      { rumorId: rumors[6].id, influencerId: mauro.id, signal: 'neutro', confidence: 0.50, reasoning: 'Competição muito equilibrada para cravar.', source: 'UOL' },
+
+      // Memphis sai (índice 7)
+      { rumorId: rumors[7].id, influencerId: nicola.id, signal: 'favoravel', confidence: 0.62, reasoning: 'Clubes europeus monitoram situação.', source: 'Yahoo' },
+
+      // Breno Bidon Copa (índice 8)
+      { rumorId: rumors[8].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.45, reasoning: 'No radar mas precisa manter nível.', source: 'O Globo' },
+
+      // Neymar Copa (índice 9)
+      { rumorId: rumors[9].id, influencerId: bechler.id, signal: 'favoravel', confidence: 0.75, reasoning: 'Dorival conta com Neymar se estiver bem fisicamente.', source: 'ESPN' },
+      { rumorId: rumors[9].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.68, reasoning: 'Neymar focado em chegar 100% na Copa.', source: 'O Globo' },
+      { rumorId: rumors[9].id, influencerId: nicola.id, signal: 'desfavoravel', confidence: 0.55, reasoning: 'Histórico de lesões preocupa.', source: 'Yahoo' },
+
+      // Gabigol Santos (índice 10)
+      { rumorId: rumors[10].id, influencerId: nicola.id, signal: 'neutro', confidence: 0.40, reasoning: 'Depende do desempenho no Cruzeiro.', source: 'Yahoo' },
+
+      // Arthur Cabral Botafogo (índice 11)
+      { rumorId: rumors[11].id, influencerId: vene.id, signal: 'favoravel', confidence: 0.70, reasoning: 'Negociação em andamento.', source: 'O Globo' },
+
+      // Lucas aposentadoria (índice 12)
+      { rumorId: rumors[12].id, influencerId: mauro.id, signal: 'favoravel', confidence: 0.58, reasoning: 'Lucas já falou em encerrar no SP.', source: 'UOL' },
+
+      // Gabigol no Cruzeiro (índice 13)
+      { rumorId: rumors[13].id, influencerId: nicola.id, signal: 'desfavoravel', confidence: 0.65, reasoning: 'Momento ruim, precisa reagir.', source: 'Yahoo' },
     ],
   })
+  console.log('📊 Sinais dos influenciadores criados')
 
-  // Criar predictions variadas para ter sentimentos diferentes
+  // Criar predictions com sentimentos variados
   const predictionData: { rumorId: string; userId: string; prediction: boolean }[] = []
 
-  // Neymar Copa - 75% favorável (15 sim, 5 não)
-  for (let i = 0; i < 15; i++) predictionData.push({ rumorId: rumors[0].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 5; i++) predictionData.push({ rumorId: rumors[0].id, userId: users[(i + 2) % 5].id, prediction: false })
+  // Claudinho no Flamengo - 72% favorável
+  for (let i = 0; i < 18; i++) predictionData.push({ rumorId: rumors[0].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 7; i++) predictionData.push({ rumorId: rumors[0].id, userId: users[(i + 2) % 5].id, prediction: false })
 
-  // Kaio Jorge - 45% favorável (9 sim, 11 não)
-  for (let i = 0; i < 9; i++) predictionData.push({ rumorId: rumors[1].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 11; i++) predictionData.push({ rumorId: rumors[1].id, userId: users[(i + 1) % 5].id, prediction: false })
+  // Supercopa Flamengo - 58% favorável
+  for (let i = 0; i < 14; i++) predictionData.push({ rumorId: rumors[1].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 10; i++) predictionData.push({ rumorId: rumors[1].id, userId: users[(i + 1) % 5].id, prediction: false })
 
-  // Breno Bidon - 38% favorável
-  for (let i = 0; i < 8; i++) predictionData.push({ rumorId: rumors[2].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[2].id, userId: users[(i + 2) % 5].id, prediction: false })
+  // Filipe Luís permanece - 85% favorável
+  for (let i = 0; i < 17; i++) predictionData.push({ rumorId: rumors[2].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 3; i++) predictionData.push({ rumorId: rumors[2].id, userId: users[(i + 3) % 5].id, prediction: false })
 
-  // Tite Cruzeiro - 52% favorável
-  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[3].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 12; i++) predictionData.push({ rumorId: rumors[3].id, userId: users[(i + 1) % 5].id, prediction: false })
+  // Dudu pro Flamengo - 25% favorável
+  for (let i = 0; i < 6; i++) predictionData.push({ rumorId: rumors[3].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 18; i++) predictionData.push({ rumorId: rumors[3].id, userId: users[(i + 1) % 5].id, prediction: false })
 
-  // Arthur Cabral - 62% favorável
-  for (let i = 0; i < 16; i++) predictionData.push({ rumorId: rumors[4].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 10; i++) predictionData.push({ rumorId: rumors[4].id, userId: users[(i + 2) % 5].id, prediction: false })
+  // Gerson volta - 45% favorável
+  for (let i = 0; i < 9; i++) predictionData.push({ rumorId: rumors[4].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 11; i++) predictionData.push({ rumorId: rumors[4].id, userId: users[(i + 2) % 5].id, prediction: false })
 
-  // Flamengo Supercopa - 68% favorável
-  for (let i = 0; i < 17; i++) predictionData.push({ rumorId: rumors[5].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 8; i++) predictionData.push({ rumorId: rumors[5].id, userId: users[(i + 1) % 5].id, prediction: false })
+  // Vitor Roque - 45% favorável
+  for (let i = 0; i < 9; i++) predictionData.push({ rumorId: rumors[5].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 11; i++) predictionData.push({ rumorId: rumors[5].id, userId: users[(i + 1) % 5].id, prediction: false })
 
-  // Fernando Diniz Santos - 35% favorável
-  for (let i = 0; i < 7; i++) predictionData.push({ rumorId: rumors[6].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[6].id, userId: users[(i + 2) % 5].id, prediction: false })
+  // Palmeiras tricampeão - 52% favorável
+  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[6].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 12; i++) predictionData.push({ rumorId: rumors[6].id, userId: users[(i + 2) % 5].id, prediction: false })
+
+  // Memphis sai - 42% favorável
+  for (let i = 0; i < 10; i++) predictionData.push({ rumorId: rumors[7].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 14; i++) predictionData.push({ rumorId: rumors[7].id, userId: users[(i + 3) % 5].id, prediction: false })
+
+  // Breno Bidon Copa - 38% favorável
+  for (let i = 0; i < 8; i++) predictionData.push({ rumorId: rumors[8].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[8].id, userId: users[(i + 1) % 5].id, prediction: false })
+
+  // Neymar Copa - 68% favorável
+  for (let i = 0; i < 17; i++) predictionData.push({ rumorId: rumors[9].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 8; i++) predictionData.push({ rumorId: rumors[9].id, userId: users[(i + 2) % 5].id, prediction: false })
 
   // Gabigol Santos - 28% favorável
-  for (let i = 0; i < 6; i++) predictionData.push({ rumorId: rumors[7].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 15; i++) predictionData.push({ rumorId: rumors[7].id, userId: users[(i + 1) % 5].id, prediction: false })
+  for (let i = 0; i < 7; i++) predictionData.push({ rumorId: rumors[10].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 18; i++) predictionData.push({ rumorId: rumors[10].id, userId: users[(i + 1) % 5].id, prediction: false })
 
-  // Palmeiras tri - 58% favorável
-  for (let i = 0; i < 14; i++) predictionData.push({ rumorId: rumors[8].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 10; i++) predictionData.push({ rumorId: rumors[8].id, userId: users[(i + 2) % 5].id, prediction: false })
-
-  // Estêvão Chelsea - 88% favorável
-  for (let i = 0; i < 22; i++) predictionData.push({ rumorId: rumors[9].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 3; i++) predictionData.push({ rumorId: rumors[9].id, userId: users[(i + 1) % 5].id, prediction: false })
-
-  // Memphis saída - 42% favorável
-  for (let i = 0; i < 10; i++) predictionData.push({ rumorId: rumors[10].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 14; i++) predictionData.push({ rumorId: rumors[10].id, userId: users[(i + 2) % 5].id, prediction: false })
-
-  // Lucas aposentadoria - 55% favorável
+  // Arthur Cabral - 55% favorável
   for (let i = 0; i < 11; i++) predictionData.push({ rumorId: rumors[11].id, userId: users[i % 5].id, prediction: true })
-  for (let i = 0; i < 9; i++) predictionData.push({ rumorId: rumors[11].id, userId: users[(i + 1) % 5].id, prediction: false })
+  for (let i = 0; i < 9; i++) predictionData.push({ rumorId: rumors[11].id, userId: users[(i + 2) % 5].id, prediction: false })
 
-  // Deduplicate predictions (same rumorId + userId should be unique)
-  const uniquePredictions = new Map<string, typeof predictionData[0]>()
-  predictionData.forEach(p => {
+  // Lucas aposentadoria - 48% favorável
+  for (let i = 0; i < 12; i++) predictionData.push({ rumorId: rumors[12].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[12].id, userId: users[(i + 1) % 5].id, prediction: false })
+
+  // Gabigol Cruzeiro - 35% favorável
+  for (let i = 0; i < 7; i++) predictionData.push({ rumorId: rumors[13].id, userId: users[i % 5].id, prediction: true })
+  for (let i = 0; i < 13; i++) predictionData.push({ rumorId: rumors[13].id, userId: users[(i + 3) % 5].id, prediction: false })
+
+  // Deduplicate predictions
+  const uniquePredictions = new Map<string, (typeof predictionData)[0]>()
+  predictionData.forEach((p) => {
     const key = `${p.rumorId}-${p.userId}`
     if (!uniquePredictions.has(key)) {
       uniquePredictions.set(key, p)
     }
   })
 
-  await prisma.prediction.createMany({
-    data: Array.from(uniquePredictions.values()),
+  await prisma.prediction.createMany({ data: Array.from(uniquePredictions.values()) })
+  console.log(`🎯 ${uniquePredictions.size} predictions criadas`)
+
+  // Criar notícias relacionadas (simulando dados scrapeados)
+  const newsItems = await Promise.all([
+    prisma.newsItem.create({
+      data: {
+        source: 'globo',
+        sourceId: 'globo-claudinho-fla-001',
+        sourceUrl: 'https://ge.globo.com/futebol/times/flamengo/',
+        authorName: 'Globo Esporte',
+        authorHandle: '@geglobo',
+        content: 'Flamengo avança em negociação com Claudinho, do Zenit. Meia brasileiro pode ser anunciado nos próximos dias.',
+        summary: 'Flamengo negocia com Claudinho',
+        publishedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        likes: 1250,
+        retweets: 320,
+      },
+    }),
+    prisma.newsItem.create({
+      data: {
+        source: 'uol',
+        sourceId: 'uol-supercopa-001',
+        sourceUrl: 'https://www.uol.com.br/esporte/futebol/',
+        authorName: 'UOL Esporte',
+        authorHandle: '@uolesporte',
+        content: 'Supercopa 2026: Flamengo e Botafogo se enfrentam dia 9 de fevereiro na decisão do primeiro título do ano.',
+        summary: 'Supercopa Flamengo x Botafogo',
+        publishedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        likes: 890,
+        retweets: 215,
+      },
+    }),
+    prisma.newsItem.create({
+      data: {
+        source: 'twitter',
+        sourceId: 'tw-vene-neymar-001',
+        sourceUrl: 'https://twitter.com/venaborges/status/123456789',
+        authorName: 'Venê Casagrande',
+        authorHandle: '@venaborges',
+        authorAvatar: 'https://pbs.twimg.com/profile_images/vene.jpg',
+        content: 'Neymar treinou normalmente ontem no CT Rei Pelé. Staff do Santos está otimista com evolução física do craque. Copa do Mundo 2026 é o grande objetivo.',
+        summary: 'Neymar treina bem no Santos',
+        publishedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
+        likes: 4500,
+        retweets: 1200,
+      },
+    }),
+    prisma.newsItem.create({
+      data: {
+        source: 'twitter',
+        sourceId: 'tw-raisa-filipe-001',
+        sourceUrl: 'https://twitter.com/rfraisinha/status/987654321',
+        authorName: 'Raisa Simplicio',
+        authorHandle: '@rfraisinha',
+        authorAvatar: 'https://pbs.twimg.com/profile_images/raisa.jpg',
+        content: 'Filipe Luís em entrevista: "Meu foco é o Flamengo. Estou muito feliz aqui e quero conquistar títulos importantes em 2026."',
+        summary: 'Filipe Luís quer ficar no Flamengo',
+        publishedAt: new Date(Date.now() - 3 * 60 * 60 * 1000),
+        likes: 3200,
+        retweets: 890,
+      },
+    }),
+    prisma.newsItem.create({
+      data: {
+        source: 'twitter',
+        sourceId: 'tw-mauro-gerson-001',
+        sourceUrl: 'https://twitter.com/maurocezar/status/111222333',
+        authorName: 'Mauro Cezar',
+        authorHandle: '@maurocezar',
+        content: 'Gerson no Flamengo? Torcida sonha, mas negócio é difícil. Salário na Europa é bem superior ao que o clube pode pagar.',
+        summary: 'Gerson: sonho difícil para o Flamengo',
+        publishedAt: new Date(Date.now() - 5 * 60 * 60 * 1000),
+        likes: 2100,
+        retweets: 540,
+      },
+    }),
+  ])
+  console.log(`📰 ${newsItems.length} notícias criadas`)
+
+  // Relacionar notícias com rumores
+  await prisma.rumorNewsItem.createMany({
+    data: [
+      { rumorId: rumors[0].id, newsItemId: newsItems[0].id, relevance: 0.95 }, // Claudinho
+      { rumorId: rumors[1].id, newsItemId: newsItems[1].id, relevance: 0.90 }, // Supercopa
+      { rumorId: rumors[9].id, newsItemId: newsItems[2].id, relevance: 0.85 }, // Neymar Copa
+      { rumorId: rumors[2].id, newsItemId: newsItems[3].id, relevance: 0.92 }, // Filipe Luís
+      { rumorId: rumors[4].id, newsItemId: newsItems[4].id, relevance: 0.88 }, // Gerson
+    ],
   })
+  console.log('🔗 Relações rumor-notícia criadas')
 
-  // Atualizar o sentiment de cada rumor baseado nas predictions reais
-  for (const rumor of rumors) {
-    const predictions = await prisma.prediction.findMany({
-      where: { rumorId: rumor.id },
-    })
-    const total = predictions.length
-    const positives = predictions.filter(p => p.prediction).length
-    const sentiment = total > 0 ? positives / total : 0.5
-
-    await prisma.rumor.update({
-      where: { id: rumor.id },
-      data: { sentiment },
-    })
-  }
-
-  // Criar posts sociais
+  // Posts sociais
   await prisma.socialPost.createMany({
     data: [
       {
@@ -467,96 +526,67 @@ async function main() {
         platform: 'twitter',
         author: 'Venê Casagrande',
         username: 'venaborges',
-        content: '🚨 NEYMAR: Jogador está focado em recuperação física. Treina em período integral no CT do Santos. Meta: voltar 100% para a Copa 2026.',
-        likes: 15420,
-        comments: 892,
-        shares: 3200,
-        postedAt: new Date('2026-01-28T14:30:00Z'),
+        content: '🔴⚫ CLAUDINHO: Flamengo avança e meia do Zenit pode ser anunciado em breve. Negociação em estágio avançado.',
+        likes: 8500,
+        comments: 420,
+        shares: 1800,
+        postedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
       },
       {
-        rumorId: rumors[5].id,
+        rumorId: rumors[1].id,
         platform: 'youtube',
         author: 'Flazoeiro',
         username: 'flazoeiro',
-        content: '🔴⚫ SUPERCOPA É NOSSA! Análise completa do duelo contra o Botafogo. Mengão chega favorito!',
+        content: '🏆 SUPERCOPA É NOSSA! Análise completa do duelo contra o Botafogo. Mengão chega favorito!',
         likes: 42000,
         comments: 3200,
         shares: 890,
-        postedAt: new Date('2026-01-27T18:00:00Z'),
+        postedAt: new Date(Date.now() - 6 * 60 * 60 * 1000),
       },
       {
         rumorId: rumors[9].id,
         platform: 'twitter',
         author: 'Marcelo Bechler',
         username: 'marcelobechler',
-        content: 'Estêvão ao Chelsea: acordo 100% fechado. Transferência será concretizada assim que completar 18 anos. Valor: €65 milhões.',
-        likes: 28300,
-        comments: 1567,
-        shares: 5100,
-        postedAt: new Date('2026-01-29T16:45:00Z'),
+        content: '🇧🇷 NEYMAR: Evolução física impressiona. Comissão técnica da Seleção vê com bons olhos a recuperação do craque.',
+        likes: 15200,
+        comments: 980,
+        shares: 2400,
+        postedAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
       },
     ],
   })
+  console.log('📱 Posts sociais criados')
 
-  // Criar notícias de exemplo
-  const newsItems = await Promise.all([
-    prisma.newsItem.create({
-      data: {
-        source: 'globo',
-        sourceId: 'ge-001',
-        sourceUrl: 'https://ge.globo.com/futebol/selecao-brasileira/noticia/neymar-treina-normalmente.ghtml',
-        authorName: 'Redação GE',
-        content: 'Neymar treina normalmente e evolui na recuperação física no Santos',
-        summary: 'Atacante faz trabalhos no campo e mostra evolução na preparação para a Copa 2026.',
-        publishedAt: new Date('2026-01-28'),
-      },
-    }),
-    prisma.newsItem.create({
-      data: {
-        source: 'uol',
-        sourceId: 'uol-001',
-        sourceUrl: 'https://www.uol.com.br/esporte/futebol/ultimas-noticias/estevao-chelsea.htm',
-        authorName: 'UOL Esporte',
-        content: 'Chelsea confirma acordo por Estêvão; Palmeiras receberá valor recorde',
-        summary: 'Joia palmeirense vai para a Premier League por €65 milhões.',
-        publishedAt: new Date('2026-01-29'),
-      },
-    }),
-    prisma.newsItem.create({
-      data: {
-        source: 'twitter',
-        sourceId: 'tw-001',
-        sourceUrl: 'https://twitter.com/venaborges/status/123456',
-        authorName: 'Venê Casagrande',
-        authorHandle: 'venaborges',
-        content: 'Arthur Cabral próximo do Botafogo. Benfica aceita proposta do clube brasileiro.',
-        publishedAt: new Date('2026-01-27'),
-      },
-    }),
-  ])
-
-  // Linkar notícias aos rumores
-  await prisma.rumorNewsItem.createMany({
+  // Atribuir badges aos usuários
+  await prisma.userBadge.createMany({
     data: [
-      { rumorId: rumors[0].id, newsItemId: newsItems[0].id, relevance: 0.95 },
-      { rumorId: rumors[9].id, newsItemId: newsItems[1].id, relevance: 0.98 },
-      { rumorId: rumors[4].id, newsItemId: newsItems[2].id, relevance: 0.85 },
+      { userId: users[0].id, badgeId: badges[0].id },
+      { userId: users[0].id, badgeId: badges[3].id },
+      { userId: users[1].id, badgeId: badges[0].id },
+      { userId: users[1].id, badgeId: badges[1].id },
+      { userId: users[1].id, badgeId: badges[3].id },
+      { userId: users[1].id, badgeId: badges[4].id },
+      { userId: users[2].id, badgeId: badges[0].id },
+      { userId: users[2].id, badgeId: badges[1].id },
+      { userId: users[3].id, badgeId: badges[0].id },
+      { userId: users[4].id, badgeId: badges[0].id },
+      { userId: users[4].id, badgeId: badges[4].id },
     ],
   })
+  console.log('🎖️ Badges atribuídos')
 
-  console.log('✅ Seed completed!')
-  console.log(`   - ${users.length} usuários criados`)
-  console.log(`   - 5 influenciadores criados`)
-  console.log(`   - ${rumors.length} rumores criados`)
-  console.log(`   - 13 sinais criados`)
-  console.log(`   - 3 posts sociais criados`)
-  console.log(`   - ${newsItems.length} notícias criadas`)
-  console.log(`   - ${uniquePredictions.size} predictions criadas`)
+  console.log('\n✅ Seed completo!')
+  console.log(`   - ${users.length} usuários`)
+  console.log(`   - 6 influenciadores`)
+  console.log(`   - ${rumors.length} rumores (5 do Flamengo)`)
+  console.log(`   - ${uniquePredictions.size} predictions`)
+  console.log(`   - ${newsItems.length} notícias`)
 }
 
 main()
   .catch((e) => {
-    console.error(e)
+    console.error('❌ Erro no seed:', e)
     process.exit(1)
   })
   .finally(async () => {
