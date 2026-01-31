@@ -45,7 +45,7 @@ export const TEAMS: Team[] = [
     shortName: 'SAN',
     color: '#000000',
     secondaryColor: '#FFFFFF',
-    logo: 'https://tmssl.akamaized.net/images/wappen/head/1094.png',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/221.png',
   },
   {
     id: 'sao-paulo',
