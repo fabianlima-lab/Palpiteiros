@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { NewsItemCard } from '@/app/components/NewsItemCard'
 import { TEAMS, findTeamByName, getTeamColor } from '@/lib/teams'
 import { TeamButton, TeamLogo } from '@/app/components/TeamLogo'
+import { ReactionPicker, REACTIONS, type ReactionEmoji } from '@/app/components/ReactionPicker'
 
 // Design System do PRD
 const COLORS = {
@@ -201,6 +202,21 @@ function RumorCard({
   const [isHovered, setIsHovered] = useState(false)
   const [localSentiment, setLocalSentiment] = useState(rumor.sentiment)
   const [localPredictions, setLocalPredictions] = useState(rumor.predictions.length)
+
+  // Estado para reações (simulado baseado em predictions)
+  const [reactionCounts, setReactionCounts] = useState<Record<ReactionEmoji, number>>(() => {
+    // Converter predictions para contagem de reações
+    const positive = rumor.predictions.filter(p => p.prediction).length
+    const negative = rumor.predictions.length - positive
+    return {
+      '🔥': Math.floor(positive * 0.4),
+      '👍': Math.ceil(positive * 0.6),
+      '😐': 0,
+      '😕': Math.floor(negative * 0.6),
+      '💔': Math.ceil(negative * 0.4),
+    }
+  })
+  const [userReaction, setUserReaction] = useState<ReactionEmoji | null>(null)
 
   // Estado para notícias relacionadas
   const [newsItems, setNewsItems] = useState<NewsItem[]>([])
@@ -427,7 +443,7 @@ function RumorCard({
         </div>
       )}
 
-      {/* Footer */}
+      {/* Footer com Reações */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -441,62 +457,49 @@ function RumorCard({
           fontSize: '13px',
           color: COLORS.textMuted,
         }}>
-          <span>{localPredictions.toLocaleString()} palpites</span>
+          <span>{localPredictions.toLocaleString()} reações</span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.preventDefault()}>
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVote(true); }}
-            disabled={isVoting || !userId}
-            style={{
-              padding: '8px 20px',
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: !userId ? 'not-allowed' : 'pointer',
-              border: `1px solid ${COLORS.colorVai}40`,
-              background: voted === true ? COLORS.colorVai : `${COLORS.colorVai}20`,
-              color: voted === true ? COLORS.textPrimary : COLORS.colorVai,
-              opacity: voted === false ? 0.6 : 1,
-              transition: 'all 0.15s ease',
+        {/* ReactionPicker compacto */}
+        <div onClick={(e) => e.preventDefault()}>
+          <ReactionPicker
+            rumorId={rumor.id}
+            userId={userId}
+            userReaction={userReaction}
+            reactionCounts={reactionCounts}
+            compact={true}
+            onReact={(emoji) => {
+              setUserReaction(emoji)
+              setReactionCounts(prev => ({
+                ...prev,
+                [emoji]: (prev[emoji] || 0) + 1,
+              }))
+              setLocalPredictions(prev => prev + 1)
+              // Atualizar sentimento baseado na reação
+              const reaction = REACTIONS.find(r => r.emoji === emoji)
+              if (reaction) {
+                const total = localPredictions + 1
+                const newSentiment = (localSentiment * localPredictions + reaction.sentiment) / total
+                setLocalSentiment(newSentiment)
+              }
             }}
-          >
-            {isVoting ? '...' : '🎯 VAI'}
-          </button>
-          <button
-            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVote(false); }}
-            disabled={isVoting || !userId}
-            style={{
-              padding: '8px 20px',
-              borderRadius: '6px',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: !userId ? 'not-allowed' : 'pointer',
-              border: `1px solid ${COLORS.colorNao}40`,
-              background: voted === false ? COLORS.colorNao : `${COLORS.colorNao}20`,
-              color: voted === false ? COLORS.textPrimary : COLORS.colorNao,
-              opacity: voted === true ? 0.6 : 1,
-              transition: 'all 0.15s ease',
-            }}
-          >
-            {isVoting ? '...' : '✗ NÃO VAI'}
-          </button>
+          />
         </div>
       </div>
 
-      {/* Feedback de voto - agora permite mudar */}
-      {voted !== null && (
+      {/* Feedback de reação */}
+      {userReaction && (
         <div style={{
           marginTop: '12px',
           padding: '8px 12px',
-          background: voted ? `${COLORS.colorVai}10` : `${COLORS.colorNao}10`,
-          border: `1px solid ${voted ? COLORS.colorVai : COLORS.colorNao}30`,
+          background: `${COLORS.accentGreen}10`,
+          border: `1px solid ${COLORS.accentGreen}30`,
           borderRadius: '6px',
           fontSize: '13px',
-          color: voted ? COLORS.colorVai : COLORS.colorNao,
+          color: COLORS.accentGreen,
           textAlign: 'center',
         }}>
-          Seu palpite: {voted ? '🎯 VAI acontecer' : '❌ NÃO vai acontecer'} (clique para mudar)
+          Sua reação: {userReaction} {REACTIONS.find(r => r.emoji === userReaction)?.label}
         </div>
       )}
 
