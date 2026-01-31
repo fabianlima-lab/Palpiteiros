@@ -2,32 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { TEAMS } from '@/lib/teams'
 
 interface SearchResult {
   type: 'team' | 'player' | 'influencer' | 'rumor'
   id: string
   title: string
   subtitle?: string
-  emoji?: string
+  logo?: string
   href: string
 }
-
-// Mock data - in production this would come from API
-const TEAMS = [
-  { id: 'flamengo', name: 'Flamengo', emoji: '🔴⚫' },
-  { id: 'corinthians', name: 'Corinthians', emoji: '⚫⚪' },
-  { id: 'palmeiras', name: 'Palmeiras', emoji: '💚' },
-  { id: 'santos', name: 'Santos', emoji: '⚪⚫' },
-  { id: 'sao-paulo', name: 'São Paulo', emoji: '🔴⚪⚫' },
-  { id: 'botafogo', name: 'Botafogo', emoji: '⭐⚫' },
-  { id: 'fluminense', name: 'Fluminense', emoji: '🟢🟣⚪' },
-  { id: 'vasco', name: 'Vasco', emoji: '⚫⚪' },
-  { id: 'atletico-mg', name: 'Atlético-MG', emoji: '⚫⚪' },
-  { id: 'cruzeiro', name: 'Cruzeiro', emoji: '💙' },
-  { id: 'internacional', name: 'Internacional', emoji: '🔴⚪' },
-  { id: 'gremio', name: 'Grêmio', emoji: '💙🖤⚪' },
-  { id: 'athletico-pr', name: 'Athletico-PR', emoji: '🔴⚫' },
-]
 
 const PLAYERS = [
   { name: 'Gabigol', team: 'Flamengo' },
@@ -88,7 +72,7 @@ export function SmartSearch({ placeholder = 'Buscar jogadores, times...', onSear
             id: team.id,
             title: team.name,
             subtitle: 'Time',
-            emoji: team.emoji,
+            logo: team.logo,
             href: team.id === 'flamengo' ? '/home' : `/time/${team.id}`
           })
         }
@@ -102,7 +86,6 @@ export function SmartSearch({ placeholder = 'Buscar jogadores, times...', onSear
             id: player.name.toLowerCase().replace(/\s/g, '-'),
             title: player.name,
             subtitle: player.team,
-            emoji: '⚽',
             href: `/explorar?player=${encodeURIComponent(player.name)}`
           })
         }
@@ -244,9 +227,18 @@ export function SmartSearch({ placeholder = 'Buscar jogadores, times...', onSear
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '18px'
+                fontSize: '18px',
+                overflow: 'hidden'
               }}>
-                {result.emoji || getTypeIcon(result.type)}
+                {result.logo ? (
+                  <img
+                    src={result.logo}
+                    alt={result.title}
+                    style={{ width: '28px', height: '28px', objectFit: 'contain' }}
+                  />
+                ) : (
+                  getTypeIcon(result.type)
+                )}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '14px', fontWeight: '600', color: '#fff' }}>

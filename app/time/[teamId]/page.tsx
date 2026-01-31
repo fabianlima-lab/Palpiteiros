@@ -1,19 +1,14 @@
 import { prisma } from '@/lib/prisma'
 import { TeamPageClient } from './TeamPageClient'
+import { TEAMS, findTeamById } from '@/lib/teams'
 
-const TEAMS_DATA: Record<string, { name: string; emoji: string; color: string; colorDark: string }> = {
-  'corinthians': { name: 'Corinthians', emoji: '⚫⚪', color: '#000000', colorDark: '#1a1a1a' },
-  'palmeiras': { name: 'Palmeiras', emoji: '💚', color: '#006437', colorDark: '#003d21' },
-  'santos': { name: 'Santos', emoji: '⚪⚫', color: '#000000', colorDark: '#1a1a1a' },
-  'sao-paulo': { name: 'São Paulo', emoji: '🔴⚪⚫', color: '#ff0000', colorDark: '#990000' },
-  'botafogo': { name: 'Botafogo', emoji: '⭐⚫', color: '#000000', colorDark: '#1a1a1a' },
-  'fluminense': { name: 'Fluminense', emoji: '🟢🟣⚪', color: '#7b1e3c', colorDark: '#4a1224' },
-  'vasco': { name: 'Vasco', emoji: '⚫⚪', color: '#000000', colorDark: '#1a1a1a' },
-  'atletico-mg': { name: 'Atlético-MG', emoji: '⚫⚪', color: '#000000', colorDark: '#1a1a1a' },
-  'cruzeiro': { name: 'Cruzeiro', emoji: '💙', color: '#003d7a', colorDark: '#002450' },
-  'internacional': { name: 'Internacional', emoji: '🔴⚪', color: '#e4002b', colorDark: '#8a001a' },
-  'gremio': { name: 'Grêmio', emoji: '💙🖤⚪', color: '#0a5eb0', colorDark: '#063a6d' },
-  'athletico-pr': { name: 'Athletico-PR', emoji: '🔴⚫', color: '#af1e2d', colorDark: '#6a121b' },
+// Helper function to darken a color
+function darkenColor(hex: string): string {
+  const color = hex.replace('#', '')
+  const r = Math.max(0, parseInt(color.slice(0, 2), 16) - 40)
+  const g = Math.max(0, parseInt(color.slice(2, 4), 16) - 40)
+  const b = Math.max(0, parseInt(color.slice(4, 6), 16) - 40)
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`
 }
 
 // Fake rumors for each team
@@ -86,9 +81,9 @@ interface PageProps {
 
 export default async function TeamPage({ params }: PageProps) {
   const { teamId } = await params
-  const teamData = TEAMS_DATA[teamId]
+  const team = findTeamById(teamId)
 
-  if (!teamData) {
+  if (!team) {
     return (
       <main style={{ backgroundColor: '#0f0f1a', minHeight: '100vh', paddingBottom: '80px' }}>
         <div style={{ padding: '40px 16px', textAlign: 'center' }}>
@@ -97,6 +92,14 @@ export default async function TeamPage({ params }: PageProps) {
         </div>
       </main>
     )
+  }
+
+  // Construct teamData from centralized team data
+  const teamData = {
+    name: team.name,
+    logo: team.logo,
+    color: team.color,
+    colorDark: darkenColor(team.color),
   }
 
   const influencers = await prisma.influencer.findMany({

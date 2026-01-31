@@ -8,7 +8,7 @@ import { PremiumPopup } from '../../components/PremiumPopup'
 
 interface TeamData {
   name: string
-  emoji: string
+  logo: string
   color: string
   colorDark: string
 }
@@ -65,12 +65,20 @@ export function TeamPageClient({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '40px',
           margin: '0 auto 12px',
           border: `3px solid ${teamData.color}`,
-          backgroundColor: 'rgba(0, 0, 0, 0.3)'
+          backgroundColor: 'rgba(0, 0, 0, 0.3)',
+          overflow: 'hidden'
         }}>
-          {teamData.emoji}
+          <img
+            src={teamData.logo}
+            alt={teamData.name}
+            style={{
+              width: '56px',
+              height: '56px',
+              objectFit: 'contain'
+            }}
+          />
         </div>
         <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#fff', marginBottom: '4px' }}>{teamData.name}</h1>
         <p style={{ fontSize: '13px', color: '#a0a0b0' }}>Rumores e palpites</p>

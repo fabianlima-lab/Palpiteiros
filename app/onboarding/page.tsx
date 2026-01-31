@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { TEAMS } from '@/lib/teams'
 
 const BRAND = {
   primary: '#8b5cf6',
@@ -11,20 +12,12 @@ const BRAND = {
   success: '#10b981',
 }
 
-const teams = [
-  { id: 'flamengo', name: 'Flamengo', badge: 'https://logodetimes.com/times/flamengo/logo-flamengo-256.png' },
-  { id: 'corinthians', name: 'Corinthians', badge: 'https://logodetimes.com/times/corinthians/logo-corinthians-256.png' },
-  { id: 'palmeiras', name: 'Palmeiras', badge: 'https://logodetimes.com/times/palmeiras/logo-palmeiras-256.png' },
-  { id: 'saopaulo', name: 'São Paulo', badge: 'https://logodetimes.com/times/sao-paulo/logo-sao-paulo-256.png' },
-  { id: 'santos', name: 'Santos', badge: 'https://logodetimes.com/times/santos/logo-santos-256.png' },
-  { id: 'fluminense', name: 'Fluminense', badge: 'https://logodetimes.com/times/fluminense/logo-fluminense-256.png' },
-  { id: 'vasco', name: 'Vasco', badge: 'https://logodetimes.com/times/vasco-da-gama/logo-vasco-da-gama-256.png' },
-  { id: 'botafogo', name: 'Botafogo', badge: 'https://logodetimes.com/times/botafogo/logo-botafogo-256.png' },
-  { id: 'gremio', name: 'Grêmio', badge: 'https://logodetimes.com/times/gremio/logo-gremio-256.png' },
-  { id: 'internacional', name: 'Inter', badge: 'https://logodetimes.com/times/internacional/logo-internacional-256.png' },
-  { id: 'atleticomg', name: 'Atlético-MG', badge: 'https://logodetimes.com/times/atletico-mineiro/logo-atletico-mineiro-256.png' },
-  { id: 'cruzeiro', name: 'Cruzeiro', badge: 'https://logodetimes.com/times/cruzeiro/logo-cruzeiro-256.png' },
-]
+// Usar times do arquivo centralizado
+const teams = TEAMS.map(t => ({
+  id: t.id,
+  name: t.name,
+  badge: t.logo,
+}))
 
 const socialNetworks = [
   { id: 'google', name: 'Google', icon: '🔵', color: '#4285F4' },

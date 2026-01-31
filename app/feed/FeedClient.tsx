@@ -2,6 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { NewsItemCard } from '@/app/components/NewsItemCard'
+import { TEAMS, findTeamByName, getTeamColor } from '@/lib/teams'
+import { TeamButton, TeamLogo } from '@/app/components/TeamLogo'
 
 // Design System do PRD
 const COLORS = {
@@ -70,6 +73,23 @@ interface TopUser {
   points: number
 }
 
+interface NewsItem {
+  id: string
+  source: string
+  sourceUrl: string
+  authorName?: string | null
+  authorHandle?: string | null
+  authorAvatar?: string | null
+  content: string
+  summary?: string | null
+  imageUrl?: string | null
+  publishedAt: string
+  likes?: number | null
+  retweets?: number | null
+  views?: number | null
+  relevance: number
+}
+
 interface FeedClientProps {
   initialRumors: Rumor[]
   user: User | null
@@ -92,24 +112,7 @@ function formatTimeAgo(date: string): string {
   return past.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
-// Helper para cor do time
-function getTeamColor(teamName: string): string {
-  const colors: Record<string, string> = {
-    'Flamengo': '#E11D48',
-    'Corinthians': '#18181B',
-    'Palmeiras': '#16A34A',
-    'Santos': '#E5E7EB',
-    'São Paulo': '#DC2626',
-    'Botafogo': '#FBBF24',
-    'Fluminense': '#7C3AED',
-    'Vasco': '#1F2937',
-    'Atlético-MG': '#27272A',
-    'Cruzeiro': '#2563EB',
-    'Internacional': '#B91C1C',
-    'Grêmio': '#0EA5E9',
-  }
-  return colors[teamName] || '#27272A'
-}
+// Helper para cor do time - agora usa dados centralizados de @/lib/teams
 
 // Skeleton Loader Component
 function SkeletonCard() {
@@ -199,12 +202,42 @@ function RumorCard({
   const [localSentiment, setLocalSentiment] = useState(rumor.sentiment)
   const [localPredictions, setLocalPredictions] = useState(rumor.predictions.length)
 
+  // Estado para notícias relacionadas
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([])
+  const [newsLoading, setNewsLoading] = useState(false)
+  const [newsExpanded, setNewsExpanded] = useState(false)
+  const [newsLoaded, setNewsLoaded] = useState(false)
+  const [totalNews, setTotalNews] = useState(0)
+
+  // Buscar notícias relacionadas
+  useEffect(() => {
+    const fetchNews = async () => {
+      if (newsLoaded) return
+      setNewsLoading(true)
+      try {
+        const response = await fetch(`/api/news/rumor?rumorId=${rumor.id}&limit=5&offset=0`)
+        const data = await response.json()
+        setNewsItems(data.news || [])
+        setTotalNews(data.total || 0)
+      } catch (error) {
+        console.error('Erro ao buscar notícias:', error)
+      } finally {
+        setNewsLoading(false)
+        setNewsLoaded(true)
+      }
+    }
+    fetchNews()
+  }, [rumor.id, newsLoaded])
+
   const percentualVai = Math.round(localSentiment * 100)
   const isQuente = (rumor.signalScore ?? 0) > 0.3 || localPredictions > 100
   const teamColor = getTeamColor(rumor.toTeam)
 
   const handleVote = async (prediction: boolean) => {
-    if (!userId || voted !== null || isVoting) return
+    if (!userId || isVoting) return
+
+    // Se já votou igual, não faz nada
+    if (voted === prediction) return
 
     setIsVoting(true)
     try {
@@ -414,17 +447,17 @@ function RumorCard({
         <div style={{ display: 'flex', gap: '8px' }} onClick={(e) => e.preventDefault()}>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVote(true); }}
-            disabled={voted !== null || isVoting || !userId}
+            disabled={isVoting || !userId}
             style={{
               padding: '8px 20px',
               borderRadius: '6px',
               fontSize: '13px',
               fontWeight: 600,
-              cursor: voted !== null || !userId ? 'not-allowed' : 'pointer',
+              cursor: !userId ? 'not-allowed' : 'pointer',
               border: `1px solid ${COLORS.colorVai}40`,
               background: voted === true ? COLORS.colorVai : `${COLORS.colorVai}20`,
               color: voted === true ? COLORS.textPrimary : COLORS.colorVai,
-              opacity: voted === false ? 0.5 : 1,
+              opacity: voted === false ? 0.6 : 1,
               transition: 'all 0.15s ease',
             }}
           >
@@ -432,17 +465,17 @@ function RumorCard({
           </button>
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleVote(false); }}
-            disabled={voted !== null || isVoting || !userId}
+            disabled={isVoting || !userId}
             style={{
               padding: '8px 20px',
               borderRadius: '6px',
               fontSize: '13px',
               fontWeight: 600,
-              cursor: voted !== null || !userId ? 'not-allowed' : 'pointer',
+              cursor: !userId ? 'not-allowed' : 'pointer',
               border: `1px solid ${COLORS.colorNao}40`,
               background: voted === false ? COLORS.colorNao : `${COLORS.colorNao}20`,
               color: voted === false ? COLORS.textPrimary : COLORS.colorNao,
-              opacity: voted === true ? 0.5 : 1,
+              opacity: voted === true ? 0.6 : 1,
               transition: 'all 0.15s ease',
             }}
           >
@@ -451,39 +484,143 @@ function RumorCard({
         </div>
       </div>
 
-      {/* Feedback de voto */}
+      {/* Feedback de voto - agora permite mudar */}
       {voted !== null && (
         <div style={{
           marginTop: '12px',
           padding: '8px 12px',
-          background: `${COLORS.colorVai}10`,
-          border: `1px solid ${COLORS.colorVai}30`,
+          background: voted ? `${COLORS.colorVai}10` : `${COLORS.colorNao}10`,
+          border: `1px solid ${voted ? COLORS.colorVai : COLORS.colorNao}30`,
           borderRadius: '6px',
           fontSize: '13px',
-          color: COLORS.colorVai,
+          color: voted ? COLORS.colorVai : COLORS.colorNao,
           textAlign: 'center',
         }}>
-          Palpite registrado! {voted ? '🎯' : '❌'} +10 pontos
+          Seu palpite: {voted ? '🎯 VAI acontecer' : '❌ NÃO vai acontecer'} (clique para mudar)
+        </div>
+      )}
+
+      {/* Seção de Notícias Relacionadas */}
+      {newsLoaded && newsItems.length > 0 && (
+        <div
+          onClick={(e) => e.preventDefault()}
+          style={{
+            marginTop: '14px',
+            borderTop: `1px solid ${COLORS.borderPrimary}`,
+            paddingTop: '12px',
+          }}
+        >
+          {/* Header da seção */}
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              setNewsExpanded(!newsExpanded)
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              padding: '4px 0',
+              marginBottom: '10px',
+            }}
+          >
+            <span style={{
+              fontSize: '12px',
+              fontWeight: 600,
+              color: COLORS.textMuted,
+              textTransform: 'uppercase',
+              letterSpacing: '1px',
+            }}>
+              📰 O que estão dizendo ({totalNews})
+            </span>
+            <span style={{
+              fontSize: '12px',
+              color: COLORS.textSecondary,
+              transition: 'transform 0.2s ease',
+              transform: newsExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+            }}>
+              ▼
+            </span>
+          </button>
+
+          {/* Lista de notícias */}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0',
+          }}>
+            {(newsExpanded ? newsItems : newsItems.slice(0, 2)).map((item) => (
+              <NewsItemCard
+                key={item.id}
+                id={item.id}
+                source={item.source}
+                sourceUrl={item.sourceUrl}
+                authorName={item.authorName}
+                authorHandle={item.authorHandle}
+                authorAvatar={item.authorAvatar}
+                content={item.content}
+                summary={item.summary}
+                imageUrl={item.imageUrl}
+                publishedAt={item.publishedAt}
+                likes={item.likes}
+                retweets={item.retweets}
+                views={item.views}
+              />
+            ))}
+          </div>
+
+          {/* Botão ver mais */}
+          {!newsExpanded && newsItems.length > 2 && (
+            <button
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                setNewsExpanded(true)
+              }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                marginTop: '4px',
+                background: 'transparent',
+                border: `1px dashed ${COLORS.borderPrimary}`,
+                borderRadius: '6px',
+                fontSize: '12px',
+                color: COLORS.textSecondary,
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              Ver mais {newsItems.length - 2} notícias
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Loading de notícias */}
+      {newsLoading && (
+        <div style={{
+          marginTop: '14px',
+          padding: '12px',
+          textAlign: 'center',
+        }}>
+          <span style={{
+            fontSize: '12px',
+            color: COLORS.textMuted,
+          }}>
+            Carregando notícias...
+          </span>
         </div>
       )}
     </Link>
   )
 }
 
-const TIMES = [
-  { id: 'flamengo', nome: 'Flamengo', emoji: '🔴', cor: '#E11D48' },
-  { id: 'corinthians', nome: 'Corinthians', emoji: '⚫', cor: '#18181B' },
-  { id: 'palmeiras', nome: 'Palmeiras', emoji: '💚', cor: '#16A34A' },
-  { id: 'santos', nome: 'Santos', emoji: '⚪', cor: '#E5E7EB' },
-  { id: 'sao-paulo', nome: 'São Paulo', emoji: '🔴', cor: '#DC2626' },
-  { id: 'botafogo', nome: 'Botafogo', emoji: '⭐', cor: '#FBBF24' },
-  { id: 'fluminense', nome: 'Fluminense', emoji: '🟢', cor: '#7C3AED' },
-  { id: 'vasco', nome: 'Vasco', emoji: '⚫', cor: '#1F2937' },
-  { id: 'atletico-mg', nome: 'Atlético-MG', emoji: '⚫', cor: '#27272A' },
-  { id: 'cruzeiro', nome: 'Cruzeiro', emoji: '💙', cor: '#2563EB' },
-  { id: 'internacional', nome: 'Inter', emoji: '🔴', cor: '#B91C1C' },
-  { id: 'gremio', nome: 'Grêmio', emoji: '💙', cor: '#0EA5E9' },
-]
+// TIMES agora vem de @/lib/teams com escudos reais
 
 export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
   const [rumors, setRumors] = useState(initialRumors)
@@ -505,7 +642,7 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
   }
 
   const meuTime = user?.team || 'Flamengo'
-  const meuTimeObj = TIMES.find(t => t.nome.toLowerCase().includes(meuTime.toLowerCase())) || TIMES[0]
+  const meuTimeObj = findTeamByName(meuTime) || TEAMS[0]
 
   // Função para carregar mais rumores
   const loadMore = useCallback(async () => {
@@ -518,6 +655,14 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
         offset: offset.toString(),
         order: filtro,
       })
+
+      // Adicionar parâmetros de relevância para personalização
+      if (user?.id) {
+        params.set('userId', user.id)
+      }
+      if (user?.team) {
+        params.set('userTeam', user.team)
+      }
 
       const response = await fetch(`/api/rumors?${params}`)
       const data = await response.json()
@@ -534,7 +679,7 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [isLoading, hasMore, offset, filtro])
+  }, [isLoading, hasMore, offset, filtro, user?.id, user?.team])
 
   // Configurar Intersection Observer para scroll infinito
   useEffect(() => {
@@ -725,11 +870,11 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
                 left: 0,
                 width: '3px',
                 height: '24px',
-                background: COLORS.accentGreen,
+                background: meuTimeObj.color,
                 borderRadius: '0 2px 2px 0',
               }} />
-              <span style={{ fontSize: '16px' }}>{meuTimeObj.emoji}</span>
-              <span>{meuTimeObj.nome}</span>
+              <TeamLogo teamName={meuTimeObj.name} size={24} />
+              <span>{meuTimeObj.name}</span>
             </div>
           </div>
 
@@ -746,7 +891,7 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
                 marginBottom: '12px',
               }}>Outros Times 🔒</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                {TIMES.filter(t => t.id !== meuTimeObj.id).slice(0, 5).map(time => (
+                {TEAMS.filter(t => t.id !== meuTimeObj.id).slice(0, 5).map(time => (
                   <button
                     key={time.id}
                     onClick={() => setShowUpsellModal(true)}
@@ -766,8 +911,8 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
                       opacity: 0.5,
                     }}
                   >
-                    <span style={{ fontSize: '16px' }}>{time.emoji}</span>
-                    <span>{time.nome}</span>
+                    <TeamLogo teamName={time.name} size={20} />
+                    <span>{time.name}</span>
                     <span style={{ marginLeft: 'auto', fontSize: '12px', color: COLORS.textMuted }}>🔒</span>
                   </button>
                 ))}
