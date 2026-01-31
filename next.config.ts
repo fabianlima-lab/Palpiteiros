@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: 'logodetimes.com',
         pathname: '/times/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'tmssl.akamaized.net',
+        pathname: '/images/**',
+      },
     ],
   },
 };

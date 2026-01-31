@@ -11,9 +11,8 @@ export interface Team {
   logo: string // URL do escudo
 }
 
-// URLs dos escudos via API do SofaScore (CDN público e confiável)
-// Formato: https://api.sofascore.app/api/v1/team/{id}/image
-// Alternativa: https://logodetimes.com/times/{nome}/logo-{nome}-{tamanho}.png
+// URLs dos escudos via Transfermarkt CDN (público e confiável)
+// Formato: https://tmssl.akamaized.net/images/wappen/head/{id}.png
 
 export const TEAMS: Team[] = [
   {
@@ -22,7 +21,7 @@ export const TEAMS: Team[] = [
     shortName: 'FLA',
     color: '#E11D48',
     secondaryColor: '#000000',
-    logo: 'https://api.sofascore.app/api/v1/team/5981/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/614.png',
   },
   {
     id: 'corinthians',
@@ -30,7 +29,7 @@ export const TEAMS: Team[] = [
     shortName: 'COR',
     color: '#000000',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1957/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/199.png',
   },
   {
     id: 'palmeiras',
@@ -38,7 +37,7 @@ export const TEAMS: Team[] = [
     shortName: 'PAL',
     color: '#006437',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1963/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/1023.png',
   },
   {
     id: 'santos',
@@ -46,7 +45,7 @@ export const TEAMS: Team[] = [
     shortName: 'SAN',
     color: '#000000',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1968/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/1094.png',
   },
   {
     id: 'sao-paulo',
@@ -54,7 +53,7 @@ export const TEAMS: Team[] = [
     shortName: 'SAO',
     color: '#FF0000',
     secondaryColor: '#000000',
-    logo: 'https://api.sofascore.app/api/v1/team/1981/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/585.png',
   },
   {
     id: 'botafogo',
@@ -62,7 +61,7 @@ export const TEAMS: Team[] = [
     shortName: 'BOT',
     color: '#000000',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1958/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/537.png',
   },
   {
     id: 'fluminense',
@@ -70,7 +69,7 @@ export const TEAMS: Team[] = [
     shortName: 'FLU',
     color: '#7B2D3E',
     secondaryColor: '#006633',
-    logo: 'https://api.sofascore.app/api/v1/team/1961/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/2462.png',
   },
   {
     id: 'vasco',
@@ -78,7 +77,7 @@ export const TEAMS: Team[] = [
     shortName: 'VAS',
     color: '#000000',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1974/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/978.png',
   },
   {
     id: 'atletico-mg',
@@ -86,7 +85,7 @@ export const TEAMS: Team[] = [
     shortName: 'CAM',
     color: '#000000',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1977/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/330.png',
   },
   {
     id: 'cruzeiro',
@@ -94,7 +93,7 @@ export const TEAMS: Team[] = [
     shortName: 'CRU',
     color: '#003DA5',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1954/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/609.png',
   },
   {
     id: 'internacional',
@@ -102,7 +101,7 @@ export const TEAMS: Team[] = [
     shortName: 'INT',
     color: '#E4002B',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1966/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/6600.png',
   },
   {
     id: 'gremio',
@@ -110,7 +109,7 @@ export const TEAMS: Team[] = [
     shortName: 'GRE',
     color: '#0080C8',
     secondaryColor: '#000000',
-    logo: 'https://api.sofascore.app/api/v1/team/5926/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/210.png',
   },
   {
     id: 'bahia',
@@ -118,7 +117,7 @@ export const TEAMS: Team[] = [
     shortName: 'BAH',
     color: '#004A99',
     secondaryColor: '#E4002B',
-    logo: 'https://api.sofascore.app/api/v1/team/1955/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/2028.png',
   },
   {
     id: 'fortaleza',
@@ -126,7 +125,7 @@ export const TEAMS: Team[] = [
     shortName: 'FOR',
     color: '#004A99',
     secondaryColor: '#E4002B',
-    logo: 'https://api.sofascore.app/api/v1/team/1965/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/10870.png',
   },
   {
     id: 'athletico-pr',
@@ -134,7 +133,7 @@ export const TEAMS: Team[] = [
     shortName: 'CAP',
     color: '#B71C1C',
     secondaryColor: '#000000',
-    logo: 'https://api.sofascore.app/api/v1/team/1980/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/679.png',
   },
   {
     id: 'bragantino',
@@ -142,7 +141,7 @@ export const TEAMS: Team[] = [
     shortName: 'RBB',
     color: '#E4002B',
     secondaryColor: '#FFFFFF',
-    logo: 'https://api.sofascore.app/api/v1/team/1999/image',
+    logo: 'https://tmssl.akamaized.net/images/wappen/head/8793.png',
   },
 ]
 
