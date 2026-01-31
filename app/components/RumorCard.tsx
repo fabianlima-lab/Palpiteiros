@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { ReactionPicker, SentimentBar, ReactionEmoji } from './ReactionPicker'
 
 interface Signal {
   id: string
@@ -28,6 +29,7 @@ interface RumorCardProps {
   fromTeam?: string | null
   toTeam: string
   title: string
+  description?: string | null
   category?: string
   sentiment: number
   closesAt: Date
@@ -36,175 +38,214 @@ interface RumorCardProps {
   userPrediction?: boolean | null
   onVote?: (rumorId: string, prediction: boolean) => void
   showSignals?: boolean
+  newsCount?: number
+}
+
+// Categorias
+const CATEGORY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
+  transferencia: { label: 'Transferência', emoji: '⚽', color: '#ff1744' },
+  tecnico: { label: 'Técnico', emoji: '📋', color: '#ffd700' },
+  titulo: { label: 'Título', emoji: '🏆', color: '#00f5a0' },
+  selecao: { label: 'Seleção', emoji: '🇧🇷', color: '#00d9f5' },
 }
 
 export function RumorCard({
   id,
   title,
-  category = 'Transferência',
+  description,
+  category = 'transferencia',
   sentiment,
   signals,
-  userPrediction,
-  onVote,
-  showSignals = true
+  predictions,
+  showSignals = true,
 }: RumorCardProps) {
-  const [isVoting, setIsVoting] = useState(false)
-  const [localPrediction, setLocalPrediction] = useState(userPrediction)
+  const [selectedReaction, setSelectedReaction] = useState<ReactionEmoji | null>(null)
 
-  const sentimentPercent = Math.round(sentiment * 100)
-  const favorableSignals = signals.filter(s => s.signal === 'favoravel')
-  const unfavorableSignals = signals.filter(s => s.signal === 'desfavoravel')
+  const totalReactions = predictions.length
+  const categoryInfo = CATEGORY_LABELS[category] || CATEGORY_LABELS.transferencia
 
-  const handleVote = async (prediction: boolean) => {
-    if (isVoting || localPrediction !== undefined) return
-    setIsVoting(true)
-    setLocalPrediction(prediction)
-    onVote?.(id, prediction)
-    setIsVoting(false)
+  // Criar contagem de reações simulada baseada no sentimento
+  const reactionCounts: Record<ReactionEmoji, number> = {
+    '🔥': Math.floor(totalReactions * sentiment * 0.4),
+    '👍': Math.ceil(totalReactions * sentiment * 0.6),
+    '😐': 0,
+    '😕': Math.ceil(totalReactions * (1 - sentiment) * 0.6),
+    '💔': Math.floor(totalReactions * (1 - sentiment) * 0.4),
   }
 
-  const hasVoted = localPrediction !== undefined
+  // Calcular sentimento em porcentagem
+  const sentimentPercent = Math.round(sentiment * 100)
+  const sentimentColor = sentiment >= 0.7 ? '#00f5a0' : sentiment >= 0.4 ? '#ffd700' : '#ff1744'
+
+  const handleReact = (emoji: ReactionEmoji) => {
+    setSelectedReaction(emoji)
+    // A API é chamada pelo ReactionPicker
+  }
 
   return (
     <div style={{
       backgroundColor: '#16162a',
       border: '1px solid #2a2a3e',
       borderRadius: '16px',
-      overflow: 'hidden'
+      overflow: 'hidden',
     }}>
-      {/* Header */}
-      <Link href={`/rumor/${id}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', padding: '16px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+      {/* Header - Clickable */}
+      <Link
+        href={`/rumor/${id}`}
+        style={{
+          display: 'block',
+          textDecoration: 'none',
+          color: 'inherit',
+          padding: '16px',
+          paddingBottom: '12px',
+        }}
+      >
+        {/* Category & Sentiment Badge */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '10px',
+        }}>
           <span style={{
             fontSize: '10px',
             fontWeight: '600',
-            color: '#ff1744',
-            backgroundColor: 'rgba(255, 23, 68, 0.15)',
+            color: categoryInfo.color,
+            backgroundColor: `${categoryInfo.color}20`,
             padding: '4px 10px',
             borderRadius: '12px',
             textTransform: 'uppercase',
-            letterSpacing: '0.5px'
-          }}>{category}</span>
-          <span style={{ fontSize: '11px', color: '#666680' }}>
-            {signals.length} {signals.length === 1 ? 'sinal' : 'sinais'}
+            letterSpacing: '0.5px',
+          }}>
+            {categoryInfo.emoji} {categoryInfo.label}
           </span>
-        </div>
-        <h3 style={{ fontSize: '15px', fontWeight: '600', color: '#fff', margin: 0, lineHeight: '1.4' }}>{title}</h3>
-      </Link>
 
-      {/* Body */}
-      <div style={{ padding: '0 16px 16px' }}>
-        {/* Sentiment Display Compact */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          <div style={{ fontSize: '28px', fontWeight: '800', color: '#00f5a0' }}>{sentimentPercent}%</div>
-          <div>
-            <div style={{ fontSize: '11px', color: '#666680', marginBottom: '2px' }}>sentimento favorável</div>
-            <div style={{ display: 'flex', gap: '8px', fontSize: '12px' }}>
-              <span style={{ color: '#00f5a0' }}>{favorableSignals.length} ✓</span>
-              <span style={{ color: '#ff1744' }}>{unfavorableSignals.length} ✗</span>
-            </div>
+          {/* Sentiment Score */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+          }}>
+            <span style={{
+              fontSize: '18px',
+              fontWeight: '800',
+              color: sentimentColor,
+            }}>
+              {sentimentPercent}%
+            </span>
+            <span style={{ fontSize: '14px' }}>
+              {sentiment >= 0.7 ? '🔥' : sentiment < 0.3 ? '💔' : ''}
+            </span>
           </div>
         </div>
 
-        {/* Sentiment Bar */}
-        <div style={{
-          height: '6px',
-          backgroundColor: '#2a2a3e',
-          borderRadius: '3px',
-          marginBottom: '16px',
-          overflow: 'hidden'
+        {/* Title */}
+        <h3 style={{
+          fontSize: '15px',
+          fontWeight: '600',
+          color: '#fff',
+          margin: 0,
+          lineHeight: '1.4',
+          marginBottom: description ? '8px' : 0,
         }}>
-          <div style={{
-            height: '100%',
-            width: `${sentimentPercent}%`,
-            background: 'linear-gradient(90deg, #00f5a0, #00d9f5)',
-            borderRadius: '3px'
-          }}></div>
-        </div>
+          {title}
+        </h3>
 
-        {/* Vote Buttons */}
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => handleVote(true)}
-            disabled={hasVoted || isVoting}
-            style={{
-              flex: 1,
-              padding: '12px',
-              borderRadius: '10px',
-              border: hasVoted && localPrediction === true ? '1px solid #00f5a0' : '1px solid transparent',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: hasVoted ? 'default' : 'pointer',
-              backgroundColor: hasVoted
-                ? localPrediction === true
-                  ? 'rgba(0, 245, 160, 0.2)'
-                  : '#1e1e2e'
-                : '#1e2e25',
-              color: hasVoted
-                ? localPrediction === true
-                  ? '#00f5a0'
-                  : '#666680'
-                : '#00f5a0'
-            }}
-          >
-            👍 Favorável
-          </button>
-          <button
-            onClick={() => handleVote(false)}
-            disabled={hasVoted || isVoting}
-            style={{
-              flex: 1,
-              padding: '12px',
-              borderRadius: '10px',
-              border: hasVoted && localPrediction === false ? '1px solid #ff1744' : '1px solid transparent',
-              fontSize: '13px',
-              fontWeight: '600',
-              cursor: hasVoted ? 'default' : 'pointer',
-              backgroundColor: hasVoted
-                ? localPrediction === false
-                  ? 'rgba(255, 23, 68, 0.2)'
-                  : '#1e1e2e'
-                : '#2e1e1e',
-              color: hasVoted
-                ? localPrediction === false
-                  ? '#ff1744'
-                  : '#666680'
-                : '#ff1744'
-            }}
-          >
-            👎 Desfavorável
-          </button>
-        </div>
+        {/* Description */}
+        {description && (
+          <p style={{
+            fontSize: '13px',
+            color: '#a0a0b0',
+            lineHeight: '1.4',
+            margin: 0,
+            display: '-webkit-box',
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: 'vertical',
+            overflow: 'hidden',
+          }}>
+            {description}
+          </p>
+        )}
+      </Link>
+
+      {/* Sentiment Bar */}
+      <div style={{ padding: '0 16px', marginBottom: '12px' }}>
+        <SentimentBar reactionCounts={reactionCounts} showLabels={false} />
       </div>
 
-      {/* Signals Preview */}
+      {/* Reactions - Compact */}
+      <div style={{ padding: '0 16px 12px' }}>
+        <ReactionPicker
+          rumorId={id}
+          userReaction={selectedReaction}
+          reactionCounts={reactionCounts}
+          onReact={handleReact}
+          compact
+        />
+      </div>
+
+      {/* Footer Stats */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 16px',
+        borderTop: '1px solid #2a2a3e',
+        backgroundColor: 'rgba(0, 0, 0, 0.2)',
+      }}>
+        <div style={{
+          display: 'flex',
+          gap: '12px',
+          fontSize: '11px',
+          color: '#666680',
+        }}>
+          {signals.length > 0 && <span>📢 {signals.length} sinais</span>}
+          {totalReactions > 0 && <span>👥 {totalReactions} reações</span>}
+        </div>
+
+        <Link
+          href={`/rumor/${id}`}
+          style={{
+            fontSize: '12px',
+            color: '#00f5a0',
+            textDecoration: 'none',
+            fontWeight: '500',
+          }}
+        >
+          Ver mais →
+        </Link>
+      </div>
+
+      {/* Influencer Signals Preview */}
       {showSignals && signals.length > 0 && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '12px 16px',
+          padding: '10px 16px',
           borderTop: '1px solid #2a2a3e',
-          backgroundColor: 'rgba(0, 0, 0, 0.2)'
+          backgroundColor: 'rgba(0, 0, 0, 0.15)',
         }}>
-          <div style={{ display: 'flex' }}>
+          <div style={{
+            display: 'flex',
+            marginRight: '10px',
+          }}>
             {signals.slice(0, 3).map((signal, i) => (
               <div
                 key={signal.id}
                 style={{
-                  width: '28px',
-                  height: '28px',
+                  width: '26px',
+                  height: '26px',
                   borderRadius: '50%',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: '700',
                   marginLeft: i > 0 ? '-8px' : '0',
                   zIndex: 3 - i,
                   backgroundColor: signal.signal === 'favoravel' ? '#1e3e2e' : '#3e1e1e',
                   border: `2px solid ${signal.signal === 'favoravel' ? '#00f5a0' : '#ff1744'}`,
-                  color: '#fff'
+                  color: '#fff',
                 }}
                 title={signal.influencer.name}
               >
@@ -212,9 +253,10 @@ export function RumorCard({
               </div>
             ))}
           </div>
-          <Link href={`/rumor/${id}`} style={{ fontSize: '12px', color: '#ff1744', textDecoration: 'none' }}>
-            Ver {signals.length} {signals.length === 1 ? 'sinal' : 'sinais'} →
-          </Link>
+          <span style={{ fontSize: '11px', color: '#a0a0b0' }}>
+            {signals[0]?.influencer.name}
+            {signals.length > 1 && ` e mais ${signals.length - 1}`}
+          </span>
         </div>
       )}
     </div>

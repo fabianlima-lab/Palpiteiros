@@ -1,22 +1,34 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { scrapeGlobo, scrapeUOL } from '@/src/lib/scrapers/rss'
+import { scrapeTwitter } from '@/src/lib/scrapers/twitter'
+import { scrapeYouTube } from '@/src/lib/scrapers/youtube'
 import {
   extractEntities,
   matchRumors,
-  calculateRelevance,
   generateSummary,
+  generateKeywords,
   detectSpike,
   calculateVelocity,
 } from '@/src/lib/scrapers/processor'
+import {
+  processNewsAndCreateRumors,
+  updateRumorStatus,
+} from '@/src/lib/scrapers/rumor-detector'
 import { ScrapedItem } from '@/src/lib/scrapers/types'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60 // 60 segundos no Vercel Pro
 
 /**
- * Cron job para agregar notícias
+ * Cron job para agregar notícias de todas as fontes
  * Executado a cada 30 minutos
+ *
+ * Fontes:
+ * - Globo Esporte (RSS)
+ * - UOL Esporte (RSS)
+ * - Twitter/X (via Nitter)
+ * - YouTube (RSS + scraping)
  */
 export async function GET(request: Request) {
   // Verificar autenticação do cron
@@ -30,6 +42,18 @@ export async function GET(request: Request) {
     }
   }
 
+  const startTime = Date.now()
+  const stats = {
+    globo: 0,
+    uol: 0,
+    twitter: 0,
+    youtube: 0,
+    total: 0,
+    saved: 0,
+    matched: 0,
+    errors: [] as string[],
+  }
+
   try {
     console.log('🔄 Iniciando scrape de notícias...')
 
@@ -40,21 +64,61 @@ export async function GET(request: Request) {
 
     console.log(`📰 ${activeRumors.length} rumores ativos encontrados`)
 
-    // 2. Executar scrapers em paralelo
-    const [globoArticles, uolArticles] = await Promise.all([
+    // 2. Gerar keywords baseado nos rumores
+    const keywords = generateKeywords(activeRumors)
+    console.log(`🔑 Keywords geradas: ${keywords.slice(0, 5).join(', ')}...`)
+
+    // 3. Executar scrapers em paralelo
+    const [globoArticles, uolArticles, tweets, videos] = await Promise.allSettled([
       scrapeGlobo(),
       scrapeUOL(),
+      scrapeTwitter(keywords),
+      scrapeYouTube(keywords),
     ])
 
-    console.log(`📰 Globo: ${globoArticles.length} artigos`)
-    console.log(`📰 UOL: ${uolArticles.length} artigos`)
+    // Processar resultados
+    const allItems: ScrapedItem[] = []
 
-    const allItems: ScrapedItem[] = [...globoArticles, ...uolArticles]
+    if (globoArticles.status === 'fulfilled') {
+      stats.globo = globoArticles.value.length
+      allItems.push(...globoArticles.value)
+      console.log(`📰 Globo: ${stats.globo} artigos`)
+    } else {
+      stats.errors.push(`Globo: ${globoArticles.reason}`)
+      console.error('❌ Erro no Globo:', globoArticles.reason)
+    }
 
-    // 3. Processar e salvar items
-    let savedCount = 0
-    let matchedCount = 0
+    if (uolArticles.status === 'fulfilled') {
+      stats.uol = uolArticles.value.length
+      allItems.push(...uolArticles.value)
+      console.log(`📰 UOL: ${stats.uol} artigos`)
+    } else {
+      stats.errors.push(`UOL: ${uolArticles.reason}`)
+      console.error('❌ Erro no UOL:', uolArticles.reason)
+    }
 
+    if (tweets.status === 'fulfilled') {
+      stats.twitter = tweets.value.length
+      allItems.push(...tweets.value)
+      console.log(`🐦 Twitter: ${stats.twitter} tweets`)
+    } else {
+      stats.errors.push(`Twitter: ${tweets.reason}`)
+      console.error('❌ Erro no Twitter:', tweets.reason)
+    }
+
+    if (videos.status === 'fulfilled') {
+      stats.youtube = videos.value.length
+      allItems.push(...videos.value)
+      console.log(`▶️ YouTube: ${stats.youtube} vídeos`)
+    } else {
+      stats.errors.push(`YouTube: ${videos.reason}`)
+      console.error('❌ Erro no YouTube:', videos.reason)
+    }
+
+    stats.total = allItems.length
+    console.log(`📊 Total de items: ${stats.total}`)
+
+    // 4. Processar e salvar items
     for (const item of allItems) {
       try {
         // Extrair entidades
@@ -96,7 +160,7 @@ export async function GET(request: Request) {
           },
         })
 
-        savedCount++
+        stats.saved++
 
         // Criar relações com rumores
         for (const match of rumorMatches) {
@@ -117,8 +181,8 @@ export async function GET(request: Request) {
                 relevance: match.relevance,
               },
             })
-            matchedCount++
-          } catch (e) {
+            stats.matched++
+          } catch {
             // Ignorar erros de constraint (já existe)
           }
         }
@@ -127,14 +191,15 @@ export async function GET(request: Request) {
       }
     }
 
-    // 4. Recalcular sinais para cada rumor
+    // 5. Recalcular sinais para cada rumor
     const currentPeriod = new Date()
     currentPeriod.setMinutes(0, 0, 0) // Arredondar para hora cheia
 
     for (const rumor of activeRumors) {
       try {
-        // Contar menções no período atual
-        const recentNews = await prisma.rumorNewsItem.count({
+        // Contar menções no período atual (por fonte)
+        const recentNewsBySource = await prisma.rumorNewsItem.groupBy({
+          by: ['newsItemId'],
           where: {
             rumorId: rumor.id,
             createdAt: {
@@ -142,6 +207,8 @@ export async function GET(request: Request) {
             },
           },
         })
+
+        const totalRecentMentions = recentNewsBySource.length
 
         // Buscar menções do período anterior
         const previousSignal = await prisma.rumorSignal.findFirst({
@@ -156,8 +223,8 @@ export async function GET(request: Request) {
         })
 
         const previousMentions = previousSignal?.mentions || 0
-        const velocity = calculateVelocity(recentNews, previousMentions)
-        const isSpike = detectSpike(recentNews, previousMentions)
+        const velocity = calculateVelocity(totalRecentMentions, previousMentions)
+        const isSpike = detectSpike(totalRecentMentions, previousMentions)
 
         // Salvar sinal
         await prisma.rumorSignal.upsert({
@@ -169,54 +236,79 @@ export async function GET(request: Request) {
             },
           },
           update: {
-            mentions: recentNews,
+            mentions: totalRecentMentions,
             velocity,
           },
           create: {
             rumorId: rumor.id,
             period: currentPeriod,
             source: 'all',
-            mentions: recentNews,
+            mentions: totalRecentMentions,
             velocity,
           },
         })
 
         // Atualizar signalScore do rumor
-        if (isSpike) {
-          await prisma.rumor.update({
-            where: { id: rumor.id },
-            data: {
-              signalScore: Math.min((rumor.signalScore || 0) + 0.1, 1.0),
-              lastScraped: new Date(),
-            },
-          })
-        } else {
-          await prisma.rumor.update({
-            where: { id: rumor.id },
-            data: {
-              lastScraped: new Date(),
-            },
-          })
-        }
+        const newSignalScore = isSpike
+          ? Math.min((rumor.signalScore || 0) + 0.1, 1.0)
+          : Math.max((rumor.signalScore || 0) - 0.02, 0) // Decay lento
+
+        await prisma.rumor.update({
+          where: { id: rumor.id },
+          data: {
+            signalScore: newSignalScore,
+            lastScraped: new Date(),
+          },
+        })
       } catch (error) {
         console.error(`Erro ao calcular sinais para rumor ${rumor.id}:`, error)
       }
     }
 
-    console.log(`✅ Scrape concluído: ${savedCount} items salvos, ${matchedCount} matches`)
+    // 6. NOVO: Detectar e criar rumores automaticamente das notícias
+    console.log('🤖 Analisando notícias para detectar novos rumores...')
+    const rumorStats = await processNewsAndCreateRumors()
+    console.log(`   ✨ Rumores criados: ${rumorStats.created}`)
+    console.log(`   📝 Rumores atualizados: ${rumorStats.updated}`)
+
+    // 7. NOVO: Atualizar status de rumores (confirmados/desmentidos)
+    const statusUpdates = await updateRumorStatus()
+    console.log(`   🔄 Status atualizados: ${statusUpdates}`)
+
+    const duration = Date.now() - startTime
+    console.log(`✅ Scrape concluído em ${duration}ms`)
+    console.log(`   📥 Salvos: ${stats.saved}`)
+    console.log(`   🔗 Matches: ${stats.matched}`)
 
     return NextResponse.json({
       success: true,
-      processed: allItems.length,
-      saved: savedCount,
-      matched: matchedCount,
-      rumorsProcessed: activeRumors.length,
+      duration: `${duration}ms`,
+      stats: {
+        sources: {
+          globo: stats.globo,
+          uol: stats.uol,
+          twitter: stats.twitter,
+          youtube: stats.youtube,
+        },
+        total: stats.total,
+        saved: stats.saved,
+        matched: stats.matched,
+        rumorsProcessed: activeRumors.length,
+        rumorsCreated: rumorStats.created,
+        rumorsUpdated: rumorStats.updated,
+        statusUpdates,
+      },
+      errors: stats.errors.length > 0 ? stats.errors : undefined,
       timestamp: new Date().toISOString(),
     })
   } catch (error) {
     console.error('❌ Erro no cron de scrape:', error)
     return NextResponse.json(
-      { error: 'Scrape failed', details: String(error) },
+      {
+        error: 'Scrape failed',
+        details: String(error),
+        duration: `${Date.now() - startTime}ms`,
+      },
       { status: 500 }
     )
   }

@@ -1,14 +1,69 @@
 import { ScrapedArticle } from './types'
 
-// RSS Feeds das principais fontes
-const RSS_FEEDS: Record<string, { url: string; source: 'globo' | 'uol' }> = {
-  'globo-futebol': {
-    url: 'https://ge.globo.com/rss/futebol/',
+// RSS Feeds das principais fontes que funcionam
+const RSS_FEEDS: Record<string, { url: string; source: 'globo' | 'uol'; name: string }> = {
+  // === FONTES PRINCIPAIS ===
+  'gazeta-esportiva': {
+    url: 'https://www.gazetaesportiva.com/feed/',
     source: 'globo',
+    name: 'Gazeta Esportiva',
   },
-  'uol-esporte': {
-    url: 'https://esporte.uol.com.br/futebol/ultimas/index.xml',
+  'trivela': {
+    url: 'https://trivela.com.br/feed/',
+    source: 'globo',
+    name: 'Trivela',
+  },
+  'espn-brasil': {
+    url: 'https://www.espn.com.br/espn/rss/futebol/news',
     source: 'uol',
+    name: 'ESPN Brasil',
+  },
+  'futebol-interior': {
+    url: 'https://www.futebolinterior.com.br/rss',
+    source: 'uol',
+    name: 'Futebol Interior',
+  },
+
+  // === FONTES ADICIONAIS ===
+  'sambafoot': {
+    url: 'https://sambafoot.com/feed/',
+    source: 'globo',
+    name: 'Sambafoot',
+  },
+  'meu-timao': {
+    url: 'https://www.meutimao.com.br/feed',
+    source: 'globo',
+    name: 'Meu Timão',
+  },
+  'netvasco': {
+    url: 'https://www.netvasco.com.br/rss/',
+    source: 'uol',
+    name: 'NetVasco',
+  },
+  'flamengo-rss': {
+    url: 'https://www.colframengo.com.br/feed/',
+    source: 'globo',
+    name: 'Coluna do Fla',
+  },
+  'palmeiras-online': {
+    url: 'https://www.palmeirasonline.com/feed/',
+    source: 'globo',
+    name: 'Palmeiras Online',
+  },
+  'torcedores': {
+    url: 'https://www.torcedores.com/feed',
+    source: 'uol',
+    name: 'Torcedores.com',
+  },
+  '90min-brasil': {
+    url: 'https://www.90min.com/pt-BR/feed',
+    source: 'uol',
+    name: '90min Brasil',
+  },
+  'footstats': {
+    url: 'https://footstats.com.br/feed/',
+    source: 'uol',
+    name: 'Footstats',
   },
 }
 
@@ -50,6 +105,12 @@ function parseRSSXML(xml: string): RSSItem[] {
       const enclosureMatch = itemContent.match(/<enclosure[^>]*url="([^"]+)"/)
       if (enclosureMatch) {
         imageUrl = enclosureMatch[1]
+      } else {
+        // Tentar extrair imagem do content:encoded
+        const imgMatch = itemContent.match(/<img[^>]*src="([^"]+)"/)
+        if (imgMatch) {
+          imageUrl = imgMatch[1]
+        }
       }
     }
 
@@ -98,6 +159,10 @@ function stripHTML(html: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/\s+/g, ' ')
     .trim()
 }
 
@@ -116,9 +181,11 @@ export async function scrapeRSSFeed(
   try {
     const response = await fetch(feed.url, {
       headers: {
-        'User-Agent': 'Palpiteiro/1.0 RSS Reader',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'application/rss+xml, application/xml, text/xml, */*',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
       },
-      next: { revalidate: 1800 }, // Cache por 30 min
+      signal: AbortSignal.timeout(15000), // 15s timeout
     })
 
     if (!response.ok) {
@@ -127,19 +194,27 @@ export async function scrapeRSSFeed(
     }
 
     const xml = await response.text()
+
+    // Verificar se é XML válido
+    if (!xml.includes('<rss') && !xml.includes('<feed')) {
+      console.error(`Feed ${feedKey} não retornou XML válido`)
+      return []
+    }
+
     const items = parseRSSXML(xml)
 
     const articles: ScrapedArticle[] = items.map(item => ({
       source: feed.source,
       sourceId: item.link, // URL como ID único
       sourceUrl: item.link,
-      authorName: feed.source === 'globo' ? 'Globo Esporte' : 'UOL Esporte',
+      authorName: feed.name,
       content: stripHTML(item.title),
       summary: item.description ? stripHTML(item.description).substring(0, 280) : undefined,
       imageUrl: item['media:thumbnail']?.$?.url || item.enclosure?.$?.url,
       publishedAt: new Date(item.pubDate),
     }))
 
+    console.log(`✅ ${feed.name}: ${articles.length} artigos`)
     return articles
   } catch (error) {
     console.error(`Erro ao fazer scrape do feed ${feedKey}:`, error)
@@ -153,33 +228,60 @@ export async function scrapeRSSFeed(
 export async function scrapeAllRSSFeeds(): Promise<ScrapedArticle[]> {
   const feedKeys = Object.keys(RSS_FEEDS)
 
-  const results = await Promise.all(
+  const results = await Promise.allSettled(
     feedKeys.map(key => scrapeRSSFeed(key))
   )
 
   // Flatten e remover duplicados por sourceId
-  const allArticles = results.flat()
-  const uniqueArticles = new Map<string, ScrapedArticle>()
+  const allArticles: ScrapedArticle[] = []
+  const uniqueUrls = new Set<string>()
 
-  for (const article of allArticles) {
-    if (!uniqueArticles.has(article.sourceId)) {
-      uniqueArticles.set(article.sourceId, article)
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const article of result.value) {
+        if (!uniqueUrls.has(article.sourceId)) {
+          uniqueUrls.add(article.sourceId)
+          allArticles.push(article)
+        }
+      }
     }
   }
 
-  return Array.from(uniqueArticles.values())
+  return allArticles
 }
 
 /**
- * Scrape Globo Esporte
+ * Scrape Globo/Gazeta Esportiva
  */
 export async function scrapeGlobo(): Promise<ScrapedArticle[]> {
-  return scrapeRSSFeed('globo-futebol')
+  const results = await Promise.allSettled([
+    scrapeRSSFeed('gazeta-esportiva'),
+    scrapeRSSFeed('trivela'),
+  ])
+
+  const articles: ScrapedArticle[] = []
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      articles.push(...result.value)
+    }
+  }
+  return articles
 }
 
 /**
- * Scrape UOL Esporte
+ * Scrape UOL/ESPN
  */
 export async function scrapeUOL(): Promise<ScrapedArticle[]> {
-  return scrapeRSSFeed('uol-esporte')
+  const results = await Promise.allSettled([
+    scrapeRSSFeed('espn-brasil'),
+    scrapeRSSFeed('futebol-interior'),
+  ])
+
+  const articles: ScrapedArticle[] = []
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      articles.push(...result.value)
+    }
+  }
+  return articles
 }
