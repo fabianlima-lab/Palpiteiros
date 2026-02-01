@@ -4,9 +4,53 @@ import { notFound } from 'next/navigation'
 import { Header } from '../../components/Header'
 import { BottomNav } from '../../components/BottomNav'
 import { RumorDetailContent } from './RumorDetailContent'
+import type { Metadata } from 'next'
 
 interface PageProps {
   params: Promise<{ id: string }>
+}
+
+// Gerar meta tags dinamicas para cada rumor (Twitter/Open Graph)
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params
+
+  const rumor = await prisma.rumor.findUnique({
+    where: { id },
+    select: {
+      title: true,
+      playerName: true,
+      toTeam: true,
+      description: true,
+    },
+  })
+
+  if (!rumor) {
+    return {
+      title: 'Rumor não encontrado - Palpiteiros',
+    }
+  }
+
+  const title = `${rumor.title} - Palpiteiros`
+  const description = rumor.description || `${rumor.playerName} pode ir para ${rumor.toTeam}. Veja o que as fontes dizem!`
+  const url = `https://palpiteiro-mvp.vercel.app/rumor/${id}`
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      siteName: 'Palpiteiros',
+      locale: 'pt_BR',
+      type: 'article',
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
+    },
+  }
 }
 
 export default async function RumorDetailPage({ params }: PageProps) {
