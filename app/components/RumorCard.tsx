@@ -11,8 +11,8 @@ interface Signal {
   influencer: {
     id: string
     name: string
-    username: string
-    outlet: string
+    username?: string
+    outlet?: string
     trustScore: number
   }
 }
@@ -23,7 +23,7 @@ interface Fonte {
   intensidade: string
   jornalista: {
     nome: string
-    handle?: string
+    handle?: string | null
     credibilidade: number
   }
 }

@@ -6,6 +6,7 @@ import { NewsItemCard } from '@/app/components/NewsItemCard'
 import { TEAMS, findTeamByName, getTeamColor } from '@/lib/teams'
 import { TeamButton, TeamLogo } from '@/app/components/TeamLogo'
 import { ReactionPicker, REACTIONS, type ReactionEmoji } from '@/app/components/ReactionPicker'
+import { RumorCard } from '@/app/components/RumorCard'
 
 // Design System do PRD
 const COLORS = {
@@ -246,8 +247,8 @@ function SkeletonCard() {
   )
 }
 
-// Componente Card de Rumor com votação real
-function RumorCard({
+// Componente Card de Rumor ANTIGO (não usado - mantido para referência)
+function FeedRumorCardOld({
   rumor,
   userId,
   userPrediction,
@@ -1114,8 +1115,26 @@ export function FeedClient({ initialRumors, user, topUsers, topFontes = [] }: Fe
                 {rumors.map(rumor => (
                   <RumorCard
                     key={rumor.id}
-                    rumor={rumor}
-                    userId={user?.id}
+                    id={rumor.id}
+                    playerName={rumor.playerName}
+                    toTeam={rumor.toTeam}
+                    fromTeam={rumor.fromTeam}
+                    title={rumor.title}
+                    description={rumor.description}
+                    contexto={rumor.contexto}
+                    category={rumor.category}
+                    categoria={rumor.categoria}
+                    probabilidade={rumor.probabilidade}
+                    probTrend={rumor.probTrend}
+                    sentiment={rumor.sentiment}
+                    sentimento={rumor.sentimento}
+                    divergencia={rumor.divergencia}
+                    closesAt={new Date(rumor.createdAt)}
+                    signals={rumor.signals}
+                    fontes={rumor.fontes}
+                    predictions={rumor.predictions}
+                    totalReacoes={rumor.totalReacoes}
+                    isHot={rumor.isHot}
                     userPrediction={userPredictions.get(rumor.id)}
                   />
                 ))}
