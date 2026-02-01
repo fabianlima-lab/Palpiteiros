@@ -44,11 +44,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'Palpiteiros',
       locale: 'pt_BR',
       type: 'article',
+      // Imagem gerada automaticamente pelo opengraph-image.tsx
     },
     twitter: {
-      card: 'summary',
+      card: 'summary_large_image',
       title,
       description,
+      // Imagem gerada automaticamente pelo opengraph-image.tsx
     },
   }
 }

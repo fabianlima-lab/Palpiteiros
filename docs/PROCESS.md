@@ -298,6 +298,7 @@ O sistema deve agregar:
 - [x] Corrigido dominio nos links de compartilhamento (palpiteiros.com → palpiteiro-mvp.vercel.app)
 - [x] Adicionada regra no PROCESS.md: SEMPRE testar antes de deploy
 - [x] Adicionado `generateMetadata` em `/rumor/[id]/page.tsx` para meta tags dinamicas (Twitter/OG)
+- [x] Criado `opengraph-image.tsx` para gerar imagem OG dinamica para cada rumor
 
 ### 2026-01-31 (Sessao Anterior - Sinais Visuais)
 - [x] Criado `lib/signals.ts` - Sistema centralizado de sinais visuais
