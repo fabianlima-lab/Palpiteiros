@@ -459,62 +459,53 @@ export function RumorCard({
         </div>
       )}
 
-      {/* PRD v3: Botoes de reacao PROEMINENTES */}
+      {/* Reações inline elegantes */}
       <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
         padding: '0 16px 12px',
       }}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          gap: '6px',
-        }}>
-          {REACTIONS.map(reaction => {
-            const isSelected = selectedReaction === reaction.emoji
-            const count = reactionCounts[reaction.emoji] || 0
-            const percent = totalForBar > 0 ? Math.round(count / totalForBar * 100) : 0
+        {REACTIONS.map(reaction => {
+          const isSelected = selectedReaction === reaction.emoji
+          const count = reactionCounts[reaction.emoji] || 0
 
-            return (
-              <button
-                key={reaction.emoji}
-                onClick={() => handleReact(reaction.emoji)}
-                title={reaction.label}
-                style={{
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '2px',
-                  padding: '8px 4px',
-                  borderRadius: '8px',
-                  border: isSelected
-                    ? `2px solid ${EMOJI_COLORS[reaction.emoji]}`
-                    : '1px solid #27272A',
-                  backgroundColor: isSelected
-                    ? `${EMOJI_COLORS[reaction.emoji]}15`
-                    : '#09090B',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
+          return (
+            <button
+              key={reaction.emoji}
+              onClick={() => handleReact(reaction.emoji)}
+              title={reaction.label}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '0',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                opacity: isSelected ? 1 : 0.7,
+                transition: 'opacity 0.15s ease',
+              }}
+            >
+              <span style={{
+                fontSize: '14px',
+                transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                transition: 'transform 0.15s ease',
+              }}>
+                {reaction.emoji}
+              </span>
+              {count > 0 && (
                 <span style={{
-                  fontSize: '20px',
-                  transform: isSelected ? 'scale(1.15)' : 'scale(1)',
-                  transition: 'transform 0.15s ease',
-                }}>
-                  {reaction.emoji}
-                </span>
-                <span style={{
-                  fontSize: '10px',
-                  color: isSelected ? EMOJI_COLORS[reaction.emoji] : '#71717A',
-                  fontWeight: '600',
+                  fontSize: '11px',
+                  color: isSelected ? '#FAFAFA' : '#71717A',
                   fontFamily: 'JetBrains Mono, monospace',
                 }}>
-                  {percent > 0 ? `${percent}%` : ''}
+                  {count}
                 </span>
-              </button>
-            )
-          })}
-        </div>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {/* Footer: Fontes + Compartilhar */}
