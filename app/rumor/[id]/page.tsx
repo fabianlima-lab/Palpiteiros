@@ -34,6 +34,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = rumor.description || `${rumor.playerName} pode ir para ${rumor.toTeam}. Veja o que as fontes dizem!`
   const url = `https://palpiteiro-mvp.vercel.app/rumor/${id}`
 
+  // Usar servico externo para gerar imagem OG dinamica
+  const ogImageUrl = `https://og.tailgraph.com/og?fontFamily=Inter&title=${encodeURIComponent(rumor.title)}&titleTailwind=text-white%20font-bold%20text-5xl&text=${encodeURIComponent(description)}&textTailwind=text-gray-400%20text-2xl%20mt-4&logo=https://palpiteiro-mvp.vercel.app/logo.svg&logoTailwind=h-12&bgTailwind=bg-zinc-900&footer=palpiteiro-mvp.vercel.app&footerTailwind=text-gray-500`
+
   return {
     title,
     description,
@@ -44,13 +47,20 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       siteName: 'Palpiteiros',
       locale: 'pt_BR',
       type: 'article',
-      // Imagem gerada automaticamente pelo opengraph-image.tsx
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      // Imagem gerada automaticamente pelo opengraph-image.tsx
+      images: [ogImageUrl],
     },
   }
 }

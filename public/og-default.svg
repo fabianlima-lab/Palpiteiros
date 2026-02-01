@@ -1,0 +1,26 @@
+<svg width="1200" height="630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#09090B"/>
+      <stop offset="100%" style="stop-color:#18181B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Logo box -->
+  <rect x="520" y="180" width="60" height="60" rx="12" fill="#7C3AED"/>
+
+  <!-- Logo text -->
+  <text x="600" y="230" font-family="system-ui, sans-serif" font-size="40" font-weight="700" fill="#10B981">palpiteiros</text>
+
+  <!-- Tagline -->
+  <text x="600" y="320" font-family="system-ui, sans-serif" font-size="32" fill="white" text-anchor="middle">Rumores do Futebol Brasileiro</text>
+
+  <!-- Subtitle -->
+  <text x="600" y="380" font-family="system-ui, sans-serif" font-size="24" fill="#A1A1AA" text-anchor="middle">Acompanhe transferencias e de seu palpite</text>
+
+  <!-- Footer -->
+  <text x="600" y="580" font-family="system-ui, sans-serif" font-size="18" fill="#71717A" text-anchor="middle">palpiteiro-mvp.vercel.app</text>
+</svg>
