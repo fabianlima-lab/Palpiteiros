@@ -7,6 +7,7 @@ import { TEAMS, findTeamByName, getTeamColor } from '@/lib/teams'
 import { TeamButton, TeamLogo } from '@/app/components/TeamLogo'
 import { ReactionPicker, REACTIONS, type ReactionEmoji } from '@/app/components/ReactionPicker'
 import { RumorCard } from '@/app/components/RumorCard'
+import { MobileMenu } from '@/app/components/MobileMenu'
 
 // Design System do PRD
 const COLORS = {
@@ -1081,7 +1082,25 @@ export function FeedClient({ initialRumors, user, topUsers, topFontes = [] }: Fe
             padding: '16px 20px',
             zIndex: 10,
           }}>
-            <h1 style={{ fontSize: '20px', fontWeight: 600 }}>Rumores</h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {/* Mobile Menu Button */}
+              <MobileMenu
+                filtro={filtro}
+                setFiltro={setFiltro}
+                meuTime={meuTime}
+                isPremium={user?.isPremium || false}
+                topFontes={topFontes}
+                trendingRumors={rumors.slice(0, 5).map(r => ({
+                  id: r.id,
+                  playerName: r.playerName,
+                  toTeam: r.toTeam,
+                  predictionsCount: r.predictions.length,
+                  sentiment: r.sentiment,
+                }))}
+                onUpsell={() => setShowUpsellModal(true)}
+              />
+              <h1 style={{ fontSize: '20px', fontWeight: 600 }}>Rumores</h1>
+            </div>
             <div style={{ display: 'flex', gap: '4px', marginTop: '12px' }}>
               {[
                 { id: 'quentes', label: '🔥 Quentes' },
