@@ -1,4 +1,4 @@
-# Prompt para Continuar o Projeto Palpiteiro
+# Prompt para Continuar o Projeto Palpiteiros
 
 Copie e cole este prompt para um novo AI:
 
@@ -6,17 +6,21 @@ Copie e cole este prompt para um novo AI:
 
 ## PROMPT
 
-Ola! Preciso que voce continue o desenvolvimento do meu projeto **Palpiteiro**.
+Ola! Preciso que voce continue o desenvolvimento do meu projeto **Palpiteiros**.
+
+### IMPORTANTE - Leia primeiro
+
+Antes de fazer qualquer coisa, leia o arquivo `docs/AI_HANDOFF_2026-01-31.md` que contem o estado atual do projeto e as mudancas mais recentes.
 
 ### O que eh o projeto
 
-Palpiteiro eh uma plataforma de previsoes de transferencias do futebol brasileiro. Usuarios votam se rumores vao acontecer, e o sistema usa sinais sociais (Twitter, YouTube, noticias) para mostrar quao "quente" cada rumor esta.
+Palpiteiros eh uma plataforma de rumores de transferencias do futebol brasileiro. Usuarios votam se rumores vao acontecer, e o sistema usa sinais sociais (Twitter, YouTube, noticias) para mostrar quao "quente" cada rumor esta.
 
 ### Tech Stack
 
-- **Frontend:** Next.js 16.1.6 + React 19 + TypeScript + Tailwind CSS 4
-- **Backend:** Next.js API Routes + tRPC 11.9.0
-- **Database:** PostgreSQL no Neon + Prisma 5.22.0
+- **Frontend:** Next.js 14+ (App Router) + React + TypeScript
+- **Backend:** Next.js API Routes + tRPC
+- **Database:** SQLite via Prisma (produção pode usar Vercel Postgres)
 - **Deploy:** Vercel
 - **APIs:** Twitter API v2 (Bearer Token configurado)
 
@@ -25,23 +29,18 @@ Palpiteiro eh uma plataforma de previsoes de transferencias do futebol brasileir
 ```bash
 # Clonar
 git clone https://github.com/fabianlima-lab/Palpiteiros.git
-cd palpiteiro-mvp
+cd Palpiteiros
 
 # Instalar
 npm install
 
-# Configurar banco (puxar env do Vercel)
-npx vercel env pull --environment=production
-
-# Ou criar .env manualmente com:
-# DATABASE_URL="postgresql://..."
-# DIRECT_URL="postgresql://..."
+# Configurar .env com:
+# DATABASE_URL="file:./dev.db"
 # TWITTER_BEARER_TOKEN="..."
 
 # Setup Prisma
 npx prisma generate
 npx prisma db push
-npx prisma db seed
 
 # Rodar
 npm run dev
@@ -51,50 +50,46 @@ npm run dev
 
 Leia estes arquivos para entender o projeto:
 
-1. `README.md` - Visao geral e setup
-2. `docs/DEVELOPMENT.md` - Guia de desenvolvimento
-3. `docs/ARCHITECTURE.md` - Arquitetura do sistema
-4. `docs/AI_HANDOFF.md` - Contexto para AI continuar
+1. `docs/AI_HANDOFF_2026-01-31.md` - **MAIS IMPORTANTE** - Estado atual e mudanças recentes
+2. `docs/ARCHITECTURE.md` - Arquitetura do sistema
+3. `docs/DEVELOPMENT.md` - Guia de desenvolvimento
 
 ### Arquivos mais importantes
 
 | Arquivo | Funcao |
 |---------|--------|
-| `prisma/schema.prisma` | Schema do banco |
-| `prisma/seed.ts` | Dados iniciais |
-| `lib/relevance.ts` | Algoritmo de ordenacao |
-| `lib/teams.ts` | Times brasileiros |
+| `src/lib/scrapers/rumor-detector.ts` | **Detecta rumores de notícias** |
+| `src/lib/scrapers/types.ts` | PLAYERS_ALIASES, TEAMS_ALIASES |
 | `src/lib/scrapers/twitter.ts` | Scraper Twitter |
 | `app/api/cron/scrape-news/route.ts` | Cron de scraping |
 | `app/feed/FeedClient.tsx` | Feed principal |
-| `app/components/RumorCard.tsx` | Card de rumor |
+| `prisma/schema.prisma` | Schema do banco |
 
-### O que ja funciona
+### O que funciona
 
-- [x] Feed de rumores com infinite scroll
+- [x] Feed de rumores
 - [x] Votacao (vai/nao vai acontecer)
 - [x] Reacoes com emojis
-- [x] Scraping de Twitter, YouTube, Globo, UOL
-- [x] Algoritmo de relevancia por time do usuario
-- [x] Sistema de influenciadores
+- [x] Scraping de Twitter, YouTube, Globo/Trivela, ESPN
+- [x] Deteccao automatica de rumores (com validacao rigorosa)
+- [x] Novo logo Palpiteiros (balao de chat)
 
-### O que precisa ser feito (backlog)
+### Backlog
 
-- [ ] Autenticacao de usuarios (NextAuth ou Clerk)
+- [ ] Autenticacao de usuarios
+- [ ] Painel admin para revisar rumores
+- [ ] Expandir mapeamento de jogadores (PLAYERS_ALIASES)
+- [ ] Integracao com Transfermarkt API
 - [ ] Notificacoes push
-- [ ] Sistema de gamificacao (badges, XP)
-- [ ] Dashboard admin
-- [ ] Historico de acertos
 
 ### Meu time eh Flamengo
 
-Quando testar, priorize rumores do Flamengo. O algoritmo de relevancia da 40 pontos extras para rumores do time do usuario.
+Quando testar, priorize rumores do Flamengo.
 
 ### Links uteis
 
 - **Producao:** https://palpiteiro-mvp.vercel.app
 - **GitHub:** https://github.com/fabianlima-lab/Palpiteiros
-- **Vercel:** https://vercel.com/fabian-limas-projects/palpiteiro-mvp
 
 ### Comandos uteis
 
@@ -106,19 +101,13 @@ curl http://localhost:3000/api/cron/scrape-news
 npx prisma studio
 
 # Resetar banco
-npx prisma db push --force-reset && npx prisma db seed
+npx prisma db push --force-reset
 ```
 
 ---
 
-Agora, o que voce gostaria que eu fizesse? Posso:
-1. Implementar uma feature especifica
-2. Corrigir um bug
-3. Melhorar algo existente
-4. Explicar como algo funciona
+Agora, o que voce gostaria que eu fizesse?
 
 ---
 
 ## FIM DO PROMPT
-
-Salve este prompt e use quando iniciar uma nova conversa com outro AI!
