@@ -395,12 +395,192 @@ export const PLAYERS_ALIASES: Record<string, string[]> = {
 
   // Gabigol - Cruzeiro
   gabigol: ['gabigol', 'gabriel barbosa', 'gabi'],
+
+  // =========================================================================
+  // JOGADORES EM NEGOCIAÇÃO / TRANSFERÊNCIAS RECENTES
+  // =========================================================================
+
+  // Claudinho - Zenit (negociando com Flamengo)
+  claudinho: ['claudinho', 'claudinho zenit'],
+
+  // Alerrandro - Bragantino/Inter (artilheiro Brasileirão 2024)
+  alerrandro: ['alerrandro'],
+
+  // Hinestroza - Colômbia (contratado pelo Vasco)
+  hinestroza: ['hinestroza', 'marino hinestroza'],
+
+  // Talisca - Al-Nassr (especulado em times brasileiros)
+  talisca: ['talisca', 'anderson talisca'],
+
+  // Jair - Nottingham Forest (especulado no Botafogo)
+  jair: ['jair', 'jair volante'],
+
+  // Igor Júlio - West Ham (especulado em times brasileiros)
+  igor_julio: ['igor júlio', 'igor julio'],
+
+  // Junior Alonso - Atlético-MG
+  junior_alonso: ['junior alonso', 'alonso'],
+}
+
+// =============================================================================
+// MAPA JOGADOR → TIME (extraído dos comentários acima)
+// Usado para filtrar rumores por time do usuário
+// =============================================================================
+
+export const PLAYER_TEAM: Record<string, string> = {
+  // Flamengo
+  lucas_paqueta: 'flamengo',
+  samuel_lino: 'flamengo',
+  pedro: 'flamengo',
+  leo_ortiz: 'flamengo',
+  arrascaeta: 'flamengo',
+  vitao: 'flamengo',
+  agustin_rossi: 'flamengo',
+  leo_pereira: 'flamengo',
+  de_la_cruz: 'flamengo',
+  carrascal: 'flamengo',
+  gonzalo_plata: 'flamengo',
+  emerson_royal: 'flamengo',
+  everton: 'flamengo',
+  andrew: 'flamengo',
+  luiz_araujo: 'flamengo',
+  wallace_yan: 'flamengo',
+
+  // Palmeiras
+  vitor_roque: 'palmeiras',
+  flaco_lopez: 'palmeiras',
+  andreas_pereira: 'palmeiras',
+  piquerez: 'palmeiras',
+  paulinho_palmeiras: 'palmeiras',
+  mauricio: 'palmeiras',
+  ramon_sosa: 'palmeiras',
+  agustin_giay: 'palmeiras',
+  raphael_veiga: 'palmeiras',
+  allan_palmeiras: 'palmeiras',
+  emiliano_martinez: 'palmeiras',
+  khellven: 'palmeiras',
+  marlon_freitas: 'palmeiras',
+
+  // Corinthians
+  yuri_alberto: 'corinthians',
+  breno_bidon: 'corinthians',
+  rodrigo_garro: 'corinthians',
+  hugo_souza: 'corinthians',
+  gui_negao: 'corinthians',
+  memphis: 'corinthians',
+  matheuzinho: 'corinthians',
+
+  // Botafogo
+  danilo_botafogo: 'botafogo',
+  alvaro_montoro: 'botafogo',
+  arthur_cabral: 'botafogo',
+  vitinho_botafogo: 'botafogo',
+  artur_botafogo: 'botafogo',
+  matheus_martins: 'botafogo',
+  santiago_rodriguez: 'botafogo',
+  alexander_barboza: 'botafogo',
+
+  // Cruzeiro
+  kaio_jorge: 'cruzeiro',
+  gerson: 'cruzeiro',
+  matheus_pereira: 'cruzeiro',
+  luis_sinisterra: 'cruzeiro',
+  fabricio_bruno: 'cruzeiro',
+  christian: 'cruzeiro',
+  kaiki: 'cruzeiro',
+  keny_arroyo: 'cruzeiro',
+  kaua_prates: 'cruzeiro',
+  gabigol: 'cruzeiro',
+
+  // Fluminense
+  martinelli: 'fluminense',
+  hercules: 'fluminense',
+  savarino: 'fluminense',
+  guilherme_arana: 'fluminense',
+  canobbio: 'fluminense',
+  john_kennedy: 'fluminense',
+  riquelme: 'fluminense',
+  facundo_bernal: 'fluminense',
+  cano: 'fluminense',
+
+  // Santos
+  gabriel_brazao: 'santos',
+  neymar: 'santos',
+  rollheiser: 'santos',
+  barreal: 'santos',
+  gabriel_menino: 'santos',
+
+  // São Paulo
+  marcos_antonio: 'sao-paulo',
+  ferreirinha: 'sao-paulo',
+  pablo_maia: 'sao-paulo',
+  ryan_francisco: 'sao-paulo',
+  calleri: 'sao-paulo',
+  luciano: 'sao-paulo',
+
+  // Vasco
+  matheus_franca: 'vasco',
+  robert_renan: 'vasco',
+  lucas_piton: 'vasco',
+  leo_jardim: 'vasco',
+  carlos_cuesta: 'vasco',
+  paulo_henrique: 'vasco',
+  vegetti: 'vasco',
+
+  // Atlético-MG
+  renan_lodi: 'atletico-mg',
+  mateo_cassierra: 'atletico-mg',
+  alexsander: 'atletico-mg',
+  natanael: 'atletico-mg',
+  tomas_cuello: 'atletico-mg',
+  gustavo_scarpa: 'atletico-mg',
+  hulk: 'atletico-mg',
+
+  // Bahia
+  jean_lucas: 'bahia',
+  erick_pulga: 'bahia',
+  luciano_juba: 'bahia',
+  ramos_mingo: 'bahia',
+  rodrigo_nestor: 'bahia',
+  caio_alexandre: 'bahia',
+  kayky: 'bahia',
+
+  // Grêmio
+  tete: 'gremio',
+
+  // Internacional
+  bernabei: 'internacional',
+
+  // Bragantino
+  isidro_pitta: 'bragantino',
+  rodriguinho: 'bragantino',
+}
+
+// Helper para buscar time de um jogador pelo nome
+export function getPlayerTeam(playerName: string): string | null {
+  const normalized = playerName.toLowerCase().trim()
+
+  // Não fazer match com nomes de times
+  const teamNames = ['flamengo', 'palmeiras', 'corinthians', 'santos', 'são paulo', 'sao paulo',
+    'botafogo', 'fluminense', 'vasco', 'atlético', 'atletico', 'cruzeiro', 'internacional',
+    'grêmio', 'gremio', 'bahia', 'fortaleza', 'athletico', 'bragantino']
+  if (teamNames.some(team => normalized === team)) {
+    return null
+  }
+
+  for (const [playerId, aliases] of Object.entries(PLAYERS_ALIASES)) {
+    // Match exato ou jogador contém o alias (não o contrário para evitar falsos positivos)
+    if (aliases.some(alias => normalized === alias || normalized.includes(alias))) {
+      return PLAYER_TEAM[playerId] || null
+    }
+  }
+  return null
 }
 
 // Jornalistas e contas confiáveis para scraping
 export const TRUSTED_JOURNALISTS = [
   // === JORNALISTAS DE TRANSFERÊNCIAS ===
-  '@venecasagrande',      // Vene Casagrande - especialista em mercado
+  '@venaborges',          // Venê Casagrande - especialista em mercado (O Globo)
   '@jorgenicola',          // Jorge Nicola - mercado da bola
   '@FabrizioRomano',       // Fabrizio Romano - transferências internacionais
   '@gavaborba',            // Gabriel Boraschi - mercado Corinthians/SP

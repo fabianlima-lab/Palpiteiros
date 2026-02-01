@@ -33,25 +33,14 @@ export default function EmpresasPage() {
         borderBottom: '1px solid rgba(139, 92, 246, 0.2)'
       }}>
         <Link href="/" style={{ textDecoration: 'none' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div style={{
-              width: '40px',
-              height: '40px',
-              background: `linear-gradient(135deg, ${BRAND.primary}, ${BRAND.secondary})`,
-              borderRadius: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '20px'
-            }}>⚽</div>
-            <span style={{
-              fontSize: '22px',
-              fontWeight: '800',
-              background: `linear-gradient(135deg, ${BRAND.primary}, ${BRAND.secondary})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent'
-            }}>Palpiteiro</span>
-          </div>
+          <img
+            src="/logo.svg"
+            alt="Palpiteiros"
+            style={{
+              height: '36px',
+              width: 'auto'
+            }}
+          />
         </Link>
         <Link href="/" style={{
           color: '#9ca3af',

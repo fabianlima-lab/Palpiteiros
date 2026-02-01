@@ -132,6 +132,15 @@ const PLAYER_CURRENT_TEAMS: Record<string, string> = {
   // Bragantino
   isidro_pitta: 'Bragantino',
   rodriguinho: 'Bragantino',
+  alerrandro: 'Bragantino', // Artilheiro 2024, contratado pelo Inter
+
+  // Exterior (jogadores em negociação)
+  claudinho: 'Zenit', // Negociando com Flamengo
+  talisca: 'Al-Nassr',
+  jair: 'Nottingham Forest',
+  igor_julio: 'West Ham',
+  hinestroza: 'Junior Barranquilla', // Contratado pelo Vasco
+  junior_alonso: 'Atlético-MG',
 }
 
 // Palavras-chave que indicam rumor de transferência
@@ -170,15 +179,56 @@ const TRANSFER_KEYWORDS = [
   'renovar', 'renovação', 'renovou',
 ]
 
-// Palavras que indicam que NÃO é rumor
-const NEGATIVE_KEYWORDS = [
-  'resultado', 'placar', 'gol', 'gols',
-  'vitória', 'derrota', 'empate',
-  'campeonato', 'rodada', 'tabela',
-  'escalação', 'relacionados',
-  'lesão', 'lesionado', 'machucado',
-  'suspenso', 'suspensão',
-  'técnico demitido', 'treinador demitido',
+// Palavras que indicam que NÃO é rumor de transferência
+// IMPORTANTE: Usar regex para evitar match parcial (ex: "contra" em "contratou")
+const NEGATIVE_PATTERNS = [
+  // Jogo/Partida (não é transferência)
+  /\bresultado\b/i, /\bplacar\b/i, /\bgols?\b/i,
+  /\bvitoria\b/i, /\bderrota\b/i, /\bempate\b/i,
+  /\bcampeonato\b/i, /\brodada\b/i, /\btabela\b/i,
+  /\bescalacao\b/i, /\brelacionados\b/i,
+  /\blesao\b/i, /\blesionado\b/i, /\bmachucado\b/i,
+  /\bsuspenso\b/i, /\bsuspensao\b/i,
+  // Confronto entre times (não é transferência)
+  /\bcontra\b/i, /\benfrenta[mr]?\b/i,
+  /\bjoga contra\b/i, /\bjogam contra\b/i,
+  /\bfinal\b/i, /\bsemifinal\b/i, /\bquartas\b/i,
+  /\bsupercopa\b/i, /\blibertadores\b/i, /\bcopa do brasil\b/i,
+  /\bbrasileira?o\b/i, /\bcampeonato brasileiro\b/i,
+  // Reestreia (já é do time)
+  /\breestreia[r]?\b/i, /\breestreou\b/i,
+  /\bestreia pelo\b/i, /\bestreou pelo\b/i,
+]
+
+// Padrões que CONFIRMAM transferência (mais rigorosos)
+const TRANSFER_PATTERNS = [
+  // Padrões de confirmação forte
+  /acertado com/i,
+  /fechado com/i,
+  /assinou com/i,
+  /contratado pel[oa]/i,
+  /contratou/i,
+  /é do \w+/i,
+  /é reforço d[oa]/i,
+  /novo reforço d[oa]/i,
+  /anunciado pel[oa]/i,
+  /oficializado/i,
+  // Padrões de negociação
+  /negocia com/i,
+  /negocia por/i,
+  /proposta d[oa]/i,
+  /oferta d[oa]/i,
+  /interesse d[oa]/i,
+  /quer contratar/i,
+  /sonda/i,
+  /vai contratar/i,
+  /tenta contratar/i,
+  // Padrões de movimento
+  /vai para o/i,
+  /rumo ao/i,
+  /destino é o/i,
+  /pode ir para/i,
+  /deve ir para/i,
 ]
 
 interface DetectedRumor {
@@ -279,36 +329,118 @@ function findPlayers(text: string): FoundPlayer[] {
 
 /**
  * Calcula score de confiança que é um rumor de transferência
+ * NOVO: Muito mais rigoroso - requer padrão explícito de transferência
  */
 function calculateConfidence(text: string): number {
   const normalizedText = normalize(text)
+  const originalText = text.toLowerCase()
+
+  // PRIMEIRO: Verificar se tem padrões negativos que INVALIDAM o rumor
+  // Usa regex com \b para word boundary (evita "contra" em "contratou")
+  for (const pattern of NEGATIVE_PATTERNS) {
+    if (pattern.test(normalizedText)) {
+      // Se menciona "contra", "enfrenta", "final", etc., NÃO é transferência
+      return 0
+    }
+  }
+
   let score = 0
 
-  // Pontos positivos por keywords de transferência
-  for (const keyword of TRANSFER_KEYWORDS) {
-    if (normalizedText.includes(normalize(keyword))) {
-      score += 0.1
+  // SEGUNDO: Verificar padrões explícitos de transferência (mais confiáveis)
+  let hasExplicitPattern = false
+  for (const pattern of TRANSFER_PATTERNS) {
+    if (pattern.test(originalText)) {
+      hasExplicitPattern = true
+      score += 0.4 // Bonus grande por padrão explícito
+      break
     }
   }
 
-  // Pontos negativos por keywords que indicam não ser rumor
-  for (const keyword of NEGATIVE_KEYWORDS) {
-    if (normalizedText.includes(normalize(keyword))) {
-      score -= 0.15
+  // Se não tem padrão explícito, ser muito mais conservador
+  if (!hasExplicitPattern) {
+    // Verificar keywords genéricas (menos confiáveis)
+    let keywordCount = 0
+    for (const keyword of TRANSFER_KEYWORDS) {
+      if (normalizedText.includes(normalize(keyword))) {
+        keywordCount++
+      }
+    }
+    // Precisa de pelo menos 2 keywords para considerar
+    if (keywordCount >= 2) {
+      score += keywordCount * 0.05
     }
   }
 
-  // Bonus se menciona valores/milhões
-  if (normalizedText.match(/\d+\s*(milh|mi\b|m\b)/)) {
-    score += 0.2
-  }
-
-  // Bonus se tem padrão "JOGADOR + TIME"
-  if (normalizedText.match(/no\s+(flamengo|palmeiras|corinthians|santos|são paulo|botafogo|fluminense|vasco|atlético|cruzeiro|internacional|grêmio)/)) {
+  // Bonus se menciona valores/milhões (indica negociação real)
+  if (normalizedText.match(/\d+\s*(milh|mi\b|euros|dolares)/)) {
     score += 0.15
   }
 
   return Math.max(0, Math.min(1, score))
+}
+
+/**
+ * Verifica se o texto realmente fala de transferência do jogador para o time
+ * ATUALIZADO: Mais flexível mas ainda seguro
+ */
+function isRealTransfer(text: string, playerName: string, toTeam: string): boolean {
+  const lowerText = text.toLowerCase()
+  const lowerPlayer = playerName.toLowerCase()
+  const lowerTeam = toTeam.toLowerCase()
+
+  // PRIMEIRO: Verificar padrões que NEGAM transferência
+  const denyPatterns = [
+    new RegExp(`${lowerPlayer}.*(contra|enfrenta|enfrentam).*${lowerTeam}`, 'i'),
+    new RegExp(`${lowerTeam}.*(contra|enfrenta|enfrentam).*${lowerPlayer}`, 'i'),
+    new RegExp(`(final|semifinal|jogo).*${lowerPlayer}.*${lowerTeam}`, 'i'),
+    new RegExp(`${lowerPlayer}.*(reestreia|estreia pelo)`, 'i'),
+    // Genéricos
+    /contra.*na (supercopa|final|semi)/i,
+    /enfrenta.*na (final|semi|libertadores)/i,
+  ]
+
+  for (const pattern of denyPatterns) {
+    if (pattern.test(lowerText)) {
+      return false
+    }
+  }
+
+  // SEGUNDO: Verificar padrões que CONFIRMAM transferência
+  const confirmPatterns = [
+    // Padrões específicos jogador + time
+    new RegExp(`${lowerPlayer}.*acertado.*${lowerTeam}`, 'i'),
+    new RegExp(`${lowerPlayer}.*fechado.*${lowerTeam}`, 'i'),
+    new RegExp(`${lowerPlayer}.*contratado.*${lowerTeam}`, 'i'),
+    new RegExp(`${lowerTeam}.*contrat.*${lowerPlayer}`, 'i'),
+    new RegExp(`${lowerTeam}.*acert.*${lowerPlayer}`, 'i'),
+    new RegExp(`${lowerPlayer}.*é do ${lowerTeam}`, 'i'),
+    new RegExp(`${lowerPlayer}.*reforço do ${lowerTeam}`, 'i'),
+    new RegExp(`${lowerTeam}.*negocia.*${lowerPlayer}`, 'i'),
+    new RegExp(`${lowerPlayer}.*pode ir para.*${lowerTeam}`, 'i'),
+    // Padrões mais flexíveis (jogador + time mencionados + verbo de transferência)
+    new RegExp(`${lowerPlayer}.*${lowerTeam}.*contrat`, 'i'),
+    new RegExp(`${lowerPlayer}.*${lowerTeam}.*acert`, 'i'),
+    new RegExp(`${lowerPlayer}.*está no.*${lowerTeam}`, 'i'),
+    new RegExp(`${lowerPlayer}.*chegou.*${lowerTeam}`, 'i'),
+  ]
+
+  for (const pattern of confirmPatterns) {
+    if (pattern.test(lowerText)) {
+      return true
+    }
+  }
+
+  // TERCEIRO: Se o jogador e o time são mencionados E tem verbo forte de transferência
+  const hasPlayer = lowerText.includes(lowerPlayer)
+  const hasTeam = lowerText.includes(lowerTeam)
+  const hasStrongVerb = /(contratou|acertou|fechou|anunciou|oficializou)/i.test(lowerText)
+
+  if (hasPlayer && hasTeam && hasStrongVerb) {
+    return true
+  }
+
+  // Se não encontrou padrão claro, assumir que NÃO é transferência (conservador)
+  return false
 }
 
 /**
@@ -339,6 +471,7 @@ function isSameTeam(team1: string, team2: string): boolean {
 
 /**
  * Extrai possíveis rumores de uma notícia
+ * ATUALIZADO: Muito mais rigoroso para evitar falsos positivos
  */
 function extractRumorsFromNews(
   content: string,
@@ -348,9 +481,9 @@ function extractRumorsFromNews(
 
   const confidence = calculateConfidence(content)
 
-  // Threshold para evitar falsos positivos
-  // Só considera se confiança >= 0.35
-  if (confidence < 0.35) {
+  // Threshold AUMENTADO para evitar falsos positivos
+  // Precisa de padrão explícito de transferência (confidence >= 0.4)
+  if (confidence < 0.4) {
     return []
   }
 
@@ -405,6 +538,12 @@ function extractRumorsFromNews(
     // VALIDAÇÃO: Se sabemos o time atual, usar ele como fromTeam
     if (player.currentTeam && !fromTeam) {
       fromTeam = player.currentTeam
+    }
+
+    // NOVA VALIDAÇÃO: Verificar se o contexto realmente indica transferência
+    if (!isRealTransfer(content, player.name, toTeam)) {
+      console.log(`⏭️ Ignorando ${player.name} → ${toTeam}: contexto não indica transferência real`)
+      continue
     }
 
     // Gerar título com nome bonito

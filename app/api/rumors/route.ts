@@ -1,7 +1,72 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getPlayerTeam, TEAMS_ALIASES } from '@/src/lib/scrapers/types'
 
 export const dynamic = 'force-dynamic'
+
+/**
+ * Verifica se um rumor é relevante para o time do usuário
+ */
+function isRumorRelevantForTeam(
+  rumor: { playerName: string; toTeam: string; fromTeam: string | null },
+  userTeam: string
+): boolean {
+  if (!userTeam) return true
+
+  const userTeamLower = userTeam.toLowerCase()
+  const toTeamLower = rumor.toTeam.toLowerCase()
+  const fromTeamLower = rumor.fromTeam?.toLowerCase() || ''
+
+  const userTeamAliases = TEAMS_ALIASES[userTeamLower] || [userTeamLower]
+
+  // Destino é o time do usuário
+  const isDestination = userTeamAliases.some(alias =>
+    toTeamLower.includes(alias) || alias.includes(toTeamLower)
+  )
+  if (isDestination) return true
+
+  // Origem é o time do usuário (só verifica se fromTeam existe)
+  if (fromTeamLower) {
+    const isOrigin = userTeamAliases.some(alias =>
+      fromTeamLower.includes(alias) || alias.includes(fromTeamLower)
+    )
+    if (isOrigin) return true
+  }
+
+  // Jogador pertence ao elenco do time
+  const playerTeam = getPlayerTeam(rumor.playerName)
+  if (playerTeam && playerTeam === userTeamLower) return true
+
+  return false
+}
+
+/**
+ * Determina se um rumor está "quente" (atividade recente) ou "frio" (esfriou)
+ */
+function isRumorHot(
+  recentSignals: { mentions: number; velocity: number }[],
+  signalScore: number | null,
+  createdAt: Date
+): boolean {
+  // Rumor novo (criado nas últimas 48h) é considerado quente
+  const hours48ago = Date.now() - 48 * 60 * 60 * 1000
+  if (createdAt.getTime() > hours48ago) return true
+
+  // Se tem signalScore alto, está quente
+  if ((signalScore ?? 0) > 0.3) return true
+
+  // Se teve menções significativas nas últimas 24h
+  const totalMentions = recentSignals.reduce((sum, s) => sum + s.mentions, 0)
+  if (totalMentions >= 5) return true
+
+  // Se teve crescimento positivo recente
+  const avgVelocity = recentSignals.length > 0
+    ? recentSignals.reduce((sum, s) => sum + s.velocity, 0) / recentSignals.length
+    : 0
+  if (avgVelocity > 0.3) return true
+
+  return false
+}
 
 /**
  * Algoritmo de Relevância para Feed
@@ -141,6 +206,9 @@ export async function GET(request: Request) {
       })
     }
 
+    // Data de 24h atrás para calcular atividade recente
+    const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
+
     // Para 'quentes', usar algoritmo de relevância completo
     const rumors = await prisma.rumor.findMany({
       where,
@@ -155,6 +223,11 @@ export async function GET(request: Request) {
         newsItems: {
           select: { id: true },
         },
+        // Incluir sinais das últimas 24h para determinar se está "quente"
+        rumorSignals: {
+          where: { period: { gte: last24h } },
+          select: { mentions: true, velocity: true },
+        },
       },
     })
 
@@ -168,8 +241,13 @@ export async function GET(request: Request) {
       userPredictions.forEach(p => userEngagedRumorIds.add(p.rumorId))
     }
 
+    // FILTRAR: Apenas rumores relevantes para o time do usuário
+    const relevantRumors = userTeam
+      ? rumors.filter(rumor => isRumorRelevantForTeam(rumor, userTeam))
+      : rumors
+
     // Calcular scores de relevância
-    const scoredRumors = rumors.map(rumor => {
+    const scoredRumors = relevantRumors.map(rumor => {
       const factors = {
         myTeam: 0,
         engagement: 0,
@@ -178,16 +256,8 @@ export async function GET(request: Request) {
         urgency: 0,
       }
 
-      // 1. Meu Time (40 pontos)
-      if (userTeam) {
-        const teamLower = userTeam.toLowerCase()
-        const isMyTeam =
-          rumor.toTeam.toLowerCase().includes(teamLower) ||
-          rumor.fromTeam?.toLowerCase().includes(teamLower) ||
-          teamLower.includes(rumor.toTeam.toLowerCase())
-
-        factors.myTeam = isMyTeam ? 40 : 0
-      }
+      // 1. Meu Time (40 pontos) - sempre true pois já filtramos
+      factors.myTeam = userTeam ? 40 : 0
 
       // 2. Engajamento prévio (20 pontos)
       factors.engagement = userEngagedRumorIds.has(rumor.id) ? 20 : 0
@@ -209,11 +279,18 @@ export async function GET(request: Request) {
 
       const totalScore = factors.myTeam + factors.engagement + factors.buzz + factors.recency + factors.urgency
 
-      return { ...rumor, _relevanceScore: totalScore }
+      // Determinar se está "quente" (atividade recente)
+      const hot = isRumorHot(rumor.rumorSignals, rumor.signalScore, rumor.createdAt)
+
+      return { ...rumor, _relevanceScore: totalScore, _isHot: hot }
     })
 
-    // Ordenar por relevância e aplicar paginação
-    scoredRumors.sort((a, b) => b._relevanceScore - a._relevanceScore)
+    // Ordenar: quentes primeiro, depois por score de relevância
+    scoredRumors.sort((a, b) => {
+      if (a._isHot && !b._isHot) return -1
+      if (!a._isHot && b._isHot) return 1
+      return b._relevanceScore - a._relevanceScore
+    })
     const paginatedRumors = scoredRumors.slice(offset, offset + limit)
     const total = scoredRumors.length
 
@@ -229,6 +306,7 @@ export async function GET(request: Request) {
       sentiment: r.sentiment,
       status: r.status,
       signalScore: r.signalScore,
+      isHot: r._isHot, // Flag para mostrar badge 🔥 ou ❄️
       createdAt: r.createdAt.toISOString(),
       updatedAt: r.updatedAt.toISOString(),
       closesAt: r.closesAt.toISOString(),

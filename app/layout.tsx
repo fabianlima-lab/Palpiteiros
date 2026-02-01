@@ -3,25 +3,25 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: 'Palpiteiro - Rumores do Futebol Brasileiro',
+  title: 'Palpiteiros - Rumores do Futebol Brasileiro',
   description: 'Acompanhe transferências, veja o que os influenciadores dizem e dê seu palpite. O termômetro dos rumores do futebol brasileiro.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'Palpiteiro',
+    title: 'Palpiteiros',
   },
   openGraph: {
-    title: 'Palpiteiro - O termômetro dos rumores do futebol',
+    title: 'Palpiteiros - O termômetro dos rumores do futebol',
     description: 'Acompanhe transferências, veja o que os influenciadores dizem e dê seu palpite',
     url: 'https://palpiteiro-mvp.vercel.app',
-    siteName: 'Palpiteiro',
+    siteName: 'Palpiteiros',
     locale: 'pt_BR',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Palpiteiro - Rumores do Futebol Brasileiro',
+    title: 'Palpiteiros - Rumores do Futebol Brasileiro',
     description: 'Acompanhe transferências, veja o que os influenciadores dizem e dê seu palpite',
   },
 };

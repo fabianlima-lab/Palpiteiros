@@ -56,6 +56,7 @@ interface Rumor {
   signals: Signal[]
   predictions: Prediction[]
   signalScore?: number | null
+  isHot?: boolean // Se o rumor está "quente" (atividade nas últimas 24h)
 }
 
 interface User {
@@ -246,7 +247,9 @@ function RumorCard({
   }, [rumor.id, newsLoaded])
 
   const percentualVai = Math.round(localSentiment * 100)
-  const isQuente = (rumor.signalScore ?? 0) > 0.3 || localPredictions > 100
+  // Usar a flag isHot do servidor (atividade nas últimas 24h)
+  // Fallback para lógica antiga se isHot não estiver definido
+  const isQuente = rumor.isHot ?? ((rumor.signalScore ?? 0) > 0.3 || localPredictions > 100)
   const teamColor = getTeamColor(rumor.toTeam)
 
   const handleVote = async (prediction: boolean) => {
@@ -326,7 +329,7 @@ function RumorCard({
         <span style={{ fontSize: '12px', color: COLORS.textMuted }}>
           {formatTimeAgo(rumor.createdAt)}
         </span>
-        {isQuente && (
+        {isQuente ? (
           <span style={{
             fontSize: '11px',
             fontWeight: 600,
@@ -338,6 +341,18 @@ function RumorCard({
             animation: 'pulse 2s infinite',
           }}>
             🔥 QUENTE
+          </span>
+        ) : (
+          <span style={{
+            fontSize: '11px',
+            fontWeight: 500,
+            color: COLORS.textMuted,
+            background: `${COLORS.textMuted}15`,
+            padding: '3px 8px',
+            borderRadius: '4px',
+            marginLeft: 'auto',
+          }}>
+            ❄️ Esfriou
           </span>
         )}
       </div>
@@ -783,23 +798,14 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
             marginBottom: '32px',
             textDecoration: 'none',
           }}>
-            <div style={{
-              width: '36px',
-              height: '36px',
-              background: `linear-gradient(135deg, ${COLORS.accentGreen}, ${COLORS.accentGreenDark})`,
-              borderRadius: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '18px',
-            }}>⚽</div>
-            <span style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              background: `linear-gradient(90deg, ${COLORS.accentGreen}, ${COLORS.accentGreenLight})`,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}>Palpiteiro</span>
+            <img
+              src="/logo.svg"
+              alt="Palpiteiros"
+              style={{
+                height: '28px',
+                width: 'auto'
+              }}
+            />
           </Link>
 
           {/* Seção Filtrar */}

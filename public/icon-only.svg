@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Palpiteiros Icon - Chat bubble with dots -->
+
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#7C3AED"/>
+
+  <!-- Speech bubble (white) -->
+  <path
+    d="M100 160 C100 120, 140 90, 210 90 L390 90 C440 90, 470 120, 470 160 L470 300 C470 340, 440 370, 390 370 L210 370 L150 430 L150 370 C120 370, 100 340, 100 300 Z"
+    fill="white"
+  />
+
+  <!-- Three dots inside bubble -->
+  <circle cx="190" cy="230" r="35" fill="#7C3AED"/>
+  <circle cx="290" cy="230" r="35" fill="#F59E0B"/>
+  <circle cx="390" cy="230" r="35" fill="#7C3AED"/>
+</svg>

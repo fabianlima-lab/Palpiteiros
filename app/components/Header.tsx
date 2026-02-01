@@ -49,25 +49,14 @@ export function Header({ title, showBack = false }: HeaderProps) {
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <Link href="/" style={{ textDecoration: 'none' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
-                  borderRadius: '10px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '18px'
-                }}>⚽</div>
-                <span style={{
-                  fontSize: '20px',
-                  fontWeight: '700',
-                  background: 'linear-gradient(135deg, #8b5cf6, #06b6d4)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent'
-                }}>Palpiteiro</span>
-              </div>
+              <img
+                src="/logo.svg"
+                alt="Palpiteiros"
+                style={{
+                  height: '32px',
+                  width: 'auto'
+                }}
+              />
             </Link>
           </div>
         )}

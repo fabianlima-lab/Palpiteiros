@@ -1,0 +1,27 @@
+<svg width="300" height="70" viewBox="0 0 300 70" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Palpiteiros - Chat bubble icon + wordmark -->
+  
+  <!-- Speech bubble icon -->
+  <path 
+    d="M8 15 C8 8, 15 4, 28 4 L52 4 C65 4, 72 8, 72 15 L72 35 C72 42, 65 46, 52 46 L28 46 L18 58 L18 46 C12 46, 8 42, 8 35 Z" 
+    fill="#7C3AED"
+  />
+  
+  <!-- Three dots inside bubble (like typing/opinions) -->
+  <circle cx="28" cy="25" r="5" fill="white"/>
+  <circle cx="42" cy="25" r="5" fill="#F59E0B"/>
+  <circle cx="56" cy="25" r="5" fill="white"/>
+  
+  <!-- Wordmark -->
+  <text 
+    x="85" 
+    y="46" 
+    font-family="Nunito, Quicksand, system-ui, sans-serif" 
+    font-size="34" 
+    font-weight="800" 
+    fill="#7C3AED"
+    letter-spacing="-0.5"
+  >
+    palpiteiros
+  </text>
+</svg>
