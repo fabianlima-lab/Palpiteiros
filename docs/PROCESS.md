@@ -82,6 +82,7 @@ palpiteiro-mvp/
 │   │   └── trpc/             # tRPC handler
 │   ├── components/           # Componentes React reutilizaveis
 │   │   ├── RumorCard.tsx     # Card de rumor principal
+│   │   ├── MobileMenu.tsx    # **NOVO** Hamburger menu para mobile
 │   │   ├── Header.tsx        # Header com logo
 │   │   └── ...
 │   ├── feed/                 # Pagina principal do feed
@@ -116,6 +117,7 @@ palpiteiro-mvp/
 | Arquivo | Funcao | Quando mexer |
 |---------|--------|--------------|
 | `app/components/RumorCard.tsx` | Card principal de rumor | UI de rumores |
+| `app/components/MobileMenu.tsx` | **Hamburger menu mobile** | Navegacao mobile |
 | `app/feed/FeedClient.tsx` | Feed principal | Logica do feed |
 | `lib/signals.ts` | **Sistema de sinais visuais e badges** | Mudar exibicao de prob/sentimento |
 | `lib/relevance.ts` | Algoritmo de ordenacao | Mudar ordem dos rumores |
@@ -206,6 +208,7 @@ git push origin main                           # Deploy automatico
 - [x] **NOVO:** Sinais visuais ao inves de percentuais (probabilidade/sentimento)
 - [x] **NOVO:** Badges de credibilidade para fontes (💎🥇🥈🥉)
 - [x] **NOVO:** Feedback de reacao mostra apenas seta (sem %)
+- [x] **NOVO:** Hamburger menu para versao mobile (MobileMenu.tsx)
 
 ### Problemas Conhecidos
 1. **Cron do Vercel:** Plano Hobby so permite cron diario
@@ -278,17 +281,20 @@ O sistema deve agregar:
 
 ## Historico de Mudancas
 
-### 2026-01-31 (Sessao Atual - Sinais Visuais)
+### 2026-02-01 (Sessao Atual - Mobile Menu)
+- [x] Criado `app/components/MobileMenu.tsx` - Hamburger menu para mobile
+- [x] Menu lateral (drawer) com 3 tabs: Menu, Trending, Fontes
+- [x] Botao hamburger aparece apenas em telas < 768px
+- [x] Integrado filtros, meu time, outros times, trending e top fontes
+- [x] Atualizado `FeedClient.tsx` - Integrado MobileMenu no header
+- [x] Corrigido feedback de reacao - mostra apenas seta (sem %)
+- [x] Revertido sinais visuais - usuario preferiu manter % com seta
+
+### 2026-01-31 (Sessao Anterior - Sinais Visuais)
 - [x] Criado `lib/signals.ts` - Sistema centralizado de sinais visuais
-- [x] Implementado `getSignalFromPercent()` - Converte % em emoji+seta
-- [x] Implementado `getCredibilityBadge()` - Sistema de badges (💎🥇🥈🥉)
-- [x] Atualizado `RumorCard.tsx` - Probabilidade e sentimento agora mostram sinais visuais
-- [x] Atualizado `RumorCard.tsx` - Fontes agora mostram badges ao inves de %
-- [x] Atualizado `RumorCard.tsx` - Feedback de reacao mostra apenas seta (sem %)
-- [x] Atualizado `FeedClient.tsx` - Sidebar "Trending" usa sinais visuais
-- [x] Atualizado `FeedClient.tsx` - Sidebar "Top Fontes" usa badges
 - [x] Criado tag `v1.0.0-pre-signals` para rollback seguro
 - [x] Criado documento PROCESS.md
+- [x] Tentativa de sinais visuais (revertido a pedido do usuario)
 
 ### 2026-01-31 (Sessao Anterior - PRD v3)
 - Logo novo implementado (balao de chat roxo)
@@ -343,5 +349,5 @@ npm run lint     # Deve passar sem erros
 
 ---
 
-*Ultima atualizacao: 2026-01-31*
+*Ultima atualizacao: 2026-02-01*
 *Atualizado por: Claude (Opus 4.5)*
