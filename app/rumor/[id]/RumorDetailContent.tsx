@@ -81,12 +81,13 @@ const CATEGORY_LABELS: Record<string, { label: string; emoji: string; color: str
 
 export function RumorDetailContent({ rumor, news, hasContent }: RumorDetailContentProps) {
   const [activeTab, setActiveTab] = useState<'noticias' | 'twitter' | 'youtube'>('noticias')
+  // PRD v3: Novos emojis
   const [reactionCounts, setReactionCounts] = useState<Record<ReactionEmoji, number>>({
     '🔥': Math.floor(rumor.totalReactions * rumor.sentiment * 0.4),
-    '👍': Math.ceil(rumor.totalReactions * rumor.sentiment * 0.6),
+    '😍': Math.ceil(rumor.totalReactions * rumor.sentiment * 0.6),
     '😐': 0,
-    '😕': Math.ceil(rumor.totalReactions * (1 - rumor.sentiment) * 0.6),
-    '💔': Math.floor(rumor.totalReactions * (1 - rumor.sentiment) * 0.4),
+    '👎': Math.ceil(rumor.totalReactions * (1 - rumor.sentiment) * 0.6),
+    '💀': Math.floor(rumor.totalReactions * (1 - rumor.sentiment) * 0.4),
   })
 
   const categoryInfo = CATEGORY_LABELS[rumor.category] || CATEGORY_LABELS.transferencia

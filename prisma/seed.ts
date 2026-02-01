@@ -1,9 +1,12 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient, EmojiReacao, CategoriaRumor, StatusRumor } from '@prisma/client'
 
 const prisma = new PrismaClient()
 
 async function main() {
-  // Limpar dados existentes
+  // Limpar dados existentes (ordem importa por FK)
+  await prisma.tweetRumor.deleteMany()
+  await prisma.fonteRumor.deleteMany()
+  await prisma.reacao.deleteMany()
   await prisma.rumorNewsItem.deleteMany()
   await prisma.rumorSignal.deleteMany()
   await prisma.newsItem.deleteMany()
@@ -11,6 +14,7 @@ async function main() {
   await prisma.prediction.deleteMany()
   await prisma.socialPost.deleteMany()
   await prisma.rumor.deleteMany()
+  await prisma.jornalista.deleteMany()
   await prisma.influencer.deleteMany()
   await prisma.userBadge.deleteMany()
   await prisma.badge.deleteMany()
@@ -85,6 +89,124 @@ async function main() {
   console.log('📰 Influenciadores criados')
 
   // =====================================
+  // PRD v3: JORNALISTAS (nova tabela)
+  // Credibilidade inicial por seguidores + seed manual
+  // =====================================
+  const jornalistas = await Promise.all([
+    prisma.jornalista.create({
+      data: {
+        nome: 'Fabrizio Romano',
+        handle: '@FabrizioRomano',
+        veiculo: 'The Guardian / Sky Sports',
+        seguidores: 20000000,
+        credibilidade: 85,
+        totalPrevisoes: 160,
+        acertos: 147,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Venê Casagrande',
+        handle: '@venaborges',
+        veiculo: 'O Globo / SporTV',
+        seguidores: 520000,
+        credibilidade: 80,
+        totalPrevisoes: 114,
+        acertos: 98,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Bruno Andrade',
+        handle: '@brunoandrd',
+        veiculo: 'UOL Esporte',
+        seguidores: 380000,
+        credibilidade: 78,
+        totalPrevisoes: 89,
+        acertos: 72,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'André Hernan',
+        handle: '@andrehernan',
+        veiculo: 'UOL / Jovem Pan',
+        seguidores: 420000,
+        credibilidade: 76,
+        totalPrevisoes: 95,
+        acertos: 74,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Jorge Nicola',
+        handle: '@joraborges',
+        veiculo: 'Yahoo Esportes',
+        seguidores: 420000,
+        credibilidade: 68,
+        totalPrevisoes: 78,
+        acertos: 56,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Paulo Vinícius Coelho',
+        handle: '@paborges',
+        veiculo: 'ESPN Brasil',
+        seguidores: 650000,
+        credibilidade: 66,
+        totalPrevisoes: 82,
+        acertos: 58,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Mauro Cezar Pereira',
+        handle: '@maurocezar',
+        veiculo: 'UOL / Jovem Pan',
+        seguidores: 750000,
+        credibilidade: 64,
+        totalPrevisoes: 86,
+        acertos: 68,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Marcelo Bechler',
+        handle: '@marcelobechler',
+        veiculo: 'ESPN Brasil',
+        seguidores: 890000,
+        credibilidade: 82,
+        totalPrevisoes: 120,
+        acertos: 112,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Raisa Simplicio',
+        handle: '@rfraisinha',
+        veiculo: 'TNT Sports',
+        seguidores: 380000,
+        credibilidade: 75,
+        totalPrevisoes: 80,
+        acertos: 65,
+      },
+    }),
+    prisma.jornalista.create({
+      data: {
+        nome: 'Sávio Dota',
+        handle: '@saviodota',
+        veiculo: 'Flazoeiro',
+        seguidores: 1200000,
+        credibilidade: 58,
+        totalPrevisoes: 70,
+        acertos: 45,
+      },
+    }),
+  ])
+  console.log(`📰 ${jornalistas.length} jornalistas PRD v3 criados`)
+
+  // =====================================
   // RUMORES - Janeiro/Fevereiro 2026
   // Foco em rumores ATUAIS e RELEVANTES
   // Prioridade para Flamengo (time do usuário)
@@ -99,7 +221,13 @@ async function main() {
         toTeam: 'Flamengo',
         title: 'Claudinho volta ao Brasil pelo Flamengo?',
         description: 'Meia do Zenit estaria em conversas avançadas com o Rubro-Negro para retorno ao futebol brasileiro.',
+        contexto: 'Claudinho não vem tendo muito espaço no Zenit e sinalizou desejo de voltar ao Brasil.',
+        categoria: CategoriaRumor.REFORCO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 58,
+        probTrend: 'subindo',
+        confianca: 'media',
         sentiment: 0.65,
         status: 'open',
         signalScore: 0.72,
@@ -113,7 +241,13 @@ async function main() {
         toTeam: 'Flamengo',
         title: 'Flamengo vence a Supercopa 2026?',
         description: 'Rubro-negro enfrenta o Botafogo na decisão da Supercopa do Brasil dia 9 de fevereiro.',
+        contexto: 'Fla e Botafogo se enfrentam na final. Flamengo é favorito mas rival está forte.',
+        categoria: CategoriaRumor.PREMIO, // Usando PREMIO para títulos
+        statusRumor: StatusRumor.ABERTO,
         category: 'titulo',
+        probabilidade: 52,
+        probTrend: 'estavel',
+        confianca: 'baixa',
         sentiment: 0.58,
         status: 'open',
         signalScore: 0.55,
@@ -127,7 +261,13 @@ async function main() {
         toTeam: 'Flamengo',
         title: 'Filipe Luís permanece no Flamengo em 2026?',
         description: 'Técnico teria sido sondado por clubes europeus mas deve seguir no comando do Mengão.',
+        contexto: 'Filipe assumiu e conquistou títulos. Torcida apoia, diretoria quer renovar.',
+        categoria: CategoriaRumor.COMISSAO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'tecnico',
+        probabilidade: 85,
+        probTrend: 'estavel',
+        confianca: 'alta',
         sentiment: 0.82,
         status: 'open',
         signalScore: 0.85,
@@ -141,7 +281,13 @@ async function main() {
         toTeam: 'Flamengo',
         title: 'Dudu troca o Palmeiras pelo Flamengo?',
         description: 'Atacante estaria insatisfeito no Verdão e Flamengo monitora situação.',
+        contexto: 'Rivalidade histórica entre os clubes dificulta negociação.',
+        categoria: CategoriaRumor.REFORCO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 15,
+        probTrend: 'caindo',
+        confianca: 'media',
         sentiment: 0.32,
         status: 'open',
         signalScore: 0.25,
@@ -155,7 +301,13 @@ async function main() {
         toTeam: 'Flamengo',
         title: 'Gerson volta ao Flamengo em 2026?',
         description: 'Coringa da torcida pode retornar ao clube após passagem na França.',
+        contexto: 'Torcida sonha com retorno do ídolo. Salário na Europa é obstáculo.',
+        categoria: CategoriaRumor.REFORCO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 28,
+        probTrend: 'estavel',
+        confianca: 'baixa',
         sentiment: 0.45,
         status: 'open',
         signalScore: 0.38,
@@ -171,7 +323,13 @@ async function main() {
         toTeam: 'Palmeiras',
         title: 'Vitor Roque retorna ao Palmeiras?',
         description: 'Atacante não se firmou no Barcelona e pode voltar ao Verdão por empréstimo.',
+        contexto: 'Barça avalia liberar jovem brasileiro. Palmeiras tem prioridade de compra.',
+        categoria: CategoriaRumor.REFORCO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 35,
+        probTrend: 'subindo',
+        confianca: 'media',
         sentiment: 0.45,
         status: 'open',
         signalScore: 0.38,
@@ -185,7 +343,13 @@ async function main() {
         toTeam: 'Palmeiras',
         title: 'Palmeiras é tricampeão brasileiro em 2026?',
         description: 'Verdão busca o terceiro título consecutivo do Brasileirão.',
+        contexto: 'Abel Ferreira renovado e elenco forte. Competição equilibrada.',
+        categoria: CategoriaRumor.PREMIO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'titulo',
+        probabilidade: 45,
+        probTrend: 'estavel',
+        confianca: 'baixa',
         sentiment: 0.52,
         status: 'open',
         signalScore: 0.48,
@@ -201,7 +365,13 @@ async function main() {
         toTeam: 'Europa',
         title: 'Memphis Depay deixa o Corinthians no meio do ano?',
         description: 'Holandês pode retornar à Europa se receber proposta após o Mundial de Clubes.',
+        contexto: 'Contrato de Memphis permite saída. Clubes europeus monitoram.',
+        categoria: CategoriaRumor.SAIDA,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 42,
+        probTrend: 'estavel',
+        confianca: 'media',
         sentiment: 0.42,
         status: 'open',
         signalScore: 0.35,
@@ -215,7 +385,13 @@ async function main() {
         toTeam: 'Seleção Brasileira',
         title: 'Breno Bidon será convocado para a Copa do Mundo?',
         description: 'Jovem volante do Corinthians impressiona e entra no radar de Dorival Jr.',
+        contexto: 'Bidon se destacou no Timão. Precisa manter nível até convocação.',
+        categoria: CategoriaRumor.SELECAO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'selecao',
+        probabilidade: 32,
+        probTrend: 'subindo',
+        confianca: 'baixa',
         sentiment: 0.38,
         status: 'open',
         signalScore: 0.32,
@@ -231,7 +407,13 @@ async function main() {
         toTeam: 'Seleção Brasileira',
         title: 'Neymar joga a Copa do Mundo 2026?',
         description: 'Craque está de volta ao Santos e busca recuperar forma física para o Mundial nos EUA.',
+        contexto: 'Neymar treina no Santos focado na Copa. Histórico de lesões preocupa.',
+        categoria: CategoriaRumor.SELECAO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'selecao',
+        probabilidade: 62,
+        probTrend: 'subindo',
+        confianca: 'media',
         sentiment: 0.68,
         status: 'open',
         signalScore: 0.62,
@@ -245,7 +427,13 @@ async function main() {
         toTeam: 'Santos',
         title: 'Gabigol troca o Cruzeiro pelo Santos?',
         description: 'Atacante pode voltar ao clube que o revelou se não emplacar em MG.',
+        contexto: 'Gabigol não está bem no Cruzeiro. Santos é clube do coração.',
+        categoria: CategoriaRumor.REFORCO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 18,
+        probTrend: 'caindo',
+        confianca: 'baixa',
         sentiment: 0.28,
         status: 'open',
         signalScore: 0.22,
@@ -261,7 +449,13 @@ async function main() {
         toTeam: 'Botafogo',
         title: 'Arthur Cabral é reforço do Botafogo?',
         description: 'Atacante brasileiro pode retornar ao país para reforçar o atual campeão.',
+        contexto: 'Botafogo busca centro-avante. Cabral tem mercado na Europa também.',
+        categoria: CategoriaRumor.REFORCO,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 48,
+        probTrend: 'estavel',
+        confianca: 'media',
         sentiment: 0.55,
         status: 'open',
         signalScore: 0.48,
@@ -277,7 +471,13 @@ async function main() {
         toTeam: 'Aposentadoria',
         title: 'Lucas Moura se aposenta em 2026?',
         description: 'Ídolo tricolor pode encerrar a carreira no clube do coração.',
+        contexto: 'Lucas já sinalizou que quer parar no SPFC. Torcida dividida.',
+        categoria: CategoriaRumor.SAIDA,
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 55,
+        probTrend: 'estavel',
+        confianca: 'media',
         sentiment: 0.48,
         status: 'open',
         signalScore: 0.42,
@@ -293,7 +493,13 @@ async function main() {
         toTeam: 'Cruzeiro',
         title: 'Gabigol recupera o bom futebol no Cruzeiro?',
         description: 'Atacante contratado como grande reforço ainda não correspondeu às expectativas.',
+        contexto: 'Gabigol chegou com muita expectativa. Pressão aumenta a cada jogo.',
+        categoria: CategoriaRumor.RENOVACAO, // Usando RENOVACAO para "permanece"
+        statusRumor: StatusRumor.ABERTO,
         category: 'transferencia',
+        probabilidade: 35,
+        probTrend: 'caindo',
+        confianca: 'baixa',
         sentiment: 0.35,
         status: 'open',
         signalScore: 0.28,
@@ -575,6 +781,132 @@ async function main() {
     ],
   })
   console.log('🎖️ Badges atribuídos')
+
+  // =====================================
+  // PRD v3: FONTES DOS JORNALISTAS
+  // Alimenta o algoritmo de probabilidade (ALG-001)
+  // =====================================
+  await prisma.fonteRumor.createMany({
+    data: [
+      // Claudinho no Flamengo
+      {
+        rumorId: rumors[0].id,
+        jornalistaId: jornalistas[1].id, // Venê
+        posicao: 'confirma',
+        intensidade: 'afirma',
+        textoOriginal: 'Flamengo avança em negociação com Claudinho. Conversas em estágio avançado.',
+        urlOriginal: 'https://ge.globo.com/futebol/times/flamengo/',
+        dataPublicacao: new Date(Date.now() - 2 * 60 * 60 * 1000),
+      },
+      {
+        rumorId: rumors[0].id,
+        jornalistaId: jornalistas[8].id, // Raisa
+        posicao: 'confirma',
+        intensidade: 'especula',
+        textoOriginal: 'Flamengo vê Claudinho como prioridade para o meio-campo.',
+        urlOriginal: 'https://twitter.com/rfraisinha/',
+        dataPublicacao: new Date(Date.now() - 4 * 60 * 60 * 1000),
+      },
+      // Filipe Luís permanece
+      {
+        rumorId: rumors[2].id,
+        jornalistaId: jornalistas[1].id, // Venê
+        posicao: 'confirma',
+        intensidade: 'crava',
+        textoOriginal: 'Filipe Luís vai renovar com o Flamengo. Diretoria já sinalizou.',
+        urlOriginal: 'https://ge.globo.com/futebol/times/flamengo/',
+        dataPublicacao: new Date(Date.now() - 24 * 60 * 60 * 1000),
+      },
+      // Neymar na Copa
+      {
+        rumorId: rumors[9].id,
+        jornalistaId: jornalistas[7].id, // Bechler
+        posicao: 'confirma',
+        intensidade: 'afirma',
+        textoOriginal: 'Dorival conta com Neymar se estiver bem fisicamente. Seleção monitora recuperação.',
+        urlOriginal: 'https://espn.com.br/',
+        dataPublicacao: new Date(Date.now() - 6 * 60 * 60 * 1000),
+      },
+      {
+        rumorId: rumors[9].id,
+        jornalistaId: jornalistas[4].id, // Nicola
+        posicao: 'nega',
+        intensidade: 'especula',
+        textoOriginal: 'Histórico de lesões de Neymar preocupa comissão técnica.',
+        urlOriginal: 'https://yahoo.com/esportes/',
+        dataPublicacao: new Date(Date.now() - 12 * 60 * 60 * 1000),
+      },
+      // Dudu pro Flamengo - maioria nega
+      {
+        rumorId: rumors[3].id,
+        jornalistaId: jornalistas[4].id, // Nicola
+        posicao: 'nega',
+        intensidade: 'afirma',
+        textoOriginal: 'Palmeiras não libera Dudu para o Flamengo. Rivalidade pesa.',
+        urlOriginal: 'https://yahoo.com/esportes/',
+        dataPublicacao: new Date(Date.now() - 48 * 60 * 60 * 1000),
+      },
+    ],
+  })
+  console.log('📰 Fontes dos jornalistas criadas')
+
+  // =====================================
+  // PRD v3: REAÇÕES (Sentimento da torcida)
+  // Novo sistema com 5 emojis por time
+  // =====================================
+  const reacoesData: {
+    userId: string
+    rumorId: string
+    timeId: string
+    emoji: EmojiReacao
+  }[] = []
+
+  // Claudinho no Flamengo - torcida do Fla quer muito (🔥)
+  reacoesData.push(
+    { userId: users[0].id, rumorId: rumors[0].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
+    { userId: users[1].id, rumorId: rumors[0].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
+    { userId: users[2].id, rumorId: rumors[0].id, timeId: 'santos', emoji: EmojiReacao.NEUTRO },
+    { userId: users[3].id, rumorId: rumors[0].id, timeId: 'corinthians', emoji: EmojiReacao.NAO_GOSTO },
+    { userId: users[4].id, rumorId: rumors[0].id, timeId: 'palmeiras', emoji: EmojiReacao.PESSIMO },
+  )
+
+  // Filipe Luís permanece - quase todos querem
+  reacoesData.push(
+    { userId: users[0].id, rumorId: rumors[2].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
+    { userId: users[1].id, rumorId: rumors[2].id, timeId: 'flamengo', emoji: EmojiReacao.AMOR },
+    { userId: users[3].id, rumorId: rumors[2].id, timeId: 'corinthians', emoji: EmojiReacao.NAO_GOSTO },
+  )
+
+  // Dudu pro Flamengo - torcida dividida, palmeirenses não querem de jeito nenhum
+  reacoesData.push(
+    { userId: users[0].id, rumorId: rumors[3].id, timeId: 'flamengo', emoji: EmojiReacao.AMOR },
+    { userId: users[1].id, rumorId: rumors[3].id, timeId: 'flamengo', emoji: EmojiReacao.NEUTRO },
+    { userId: users[4].id, rumorId: rumors[3].id, timeId: 'palmeiras', emoji: EmojiReacao.PESSIMO },
+    { userId: users[3].id, rumorId: rumors[3].id, timeId: 'corinthians', emoji: EmojiReacao.FOGO }, // Rival quer zoar
+  )
+
+  // Neymar na Copa - Brasil quer
+  reacoesData.push(
+    { userId: users[0].id, rumorId: rumors[9].id, timeId: 'flamengo', emoji: EmojiReacao.AMOR },
+    { userId: users[2].id, rumorId: rumors[9].id, timeId: 'santos', emoji: EmojiReacao.FOGO },
+    { userId: users[3].id, rumorId: rumors[9].id, timeId: 'corinthians', emoji: EmojiReacao.AMOR },
+    { userId: users[4].id, rumorId: rumors[9].id, timeId: 'palmeiras', emoji: EmojiReacao.AMOR },
+  )
+
+  // Gerson volta - torcida do Fla sonha
+  reacoesData.push(
+    { userId: users[0].id, rumorId: rumors[4].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
+    { userId: users[1].id, rumorId: rumors[4].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
+  )
+
+  // Memphis sai do Corinthians - torcida não quer
+  reacoesData.push(
+    { userId: users[3].id, rumorId: rumors[7].id, timeId: 'corinthians', emoji: EmojiReacao.PESSIMO },
+    { userId: users[0].id, rumorId: rumors[7].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO }, // Rival quer
+  )
+
+  await prisma.reacao.createMany({ data: reacoesData })
+  console.log(`🎭 ${reacoesData.length} reações PRD v3 criadas`)
 
   console.log('\n✅ Seed completo!')
   console.log(`   - ${users.length} usuários`)

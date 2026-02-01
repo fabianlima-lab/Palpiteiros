@@ -5,12 +5,13 @@ import { useState } from 'react'
 // Sistema de reações tipo Slack para expressar sentimento
 // Focado em SENTIMENTO, não em previsão binária
 
+// PRD v3: Novos emojis com valores de -2 a +2
 export const REACTIONS = [
-  { emoji: '🔥', label: 'Quero muito', sentiment: 1.0 },
-  { emoji: '👍', label: 'Seria bom', sentiment: 0.75 },
-  { emoji: '😐', label: 'Tanto faz', sentiment: 0.5 },
-  { emoji: '😕', label: 'Não curti', sentiment: 0.25 },
-  { emoji: '💔', label: 'Não quero', sentiment: 0.0 },
+  { emoji: '🔥', label: 'Quero muito', sentiment: 1.0, value: 2 },
+  { emoji: '😍', label: 'Gosto', sentiment: 0.75, value: 1 },
+  { emoji: '😐', label: 'Tanto faz', sentiment: 0.5, value: 0 },
+  { emoji: '👎', label: 'Não gosto', sentiment: 0.25, value: -1 },
+  { emoji: '💀', label: 'Péssima ideia', sentiment: 0.0, value: -2 },
 ] as const
 
 export type ReactionEmoji = typeof REACTIONS[number]['emoji']

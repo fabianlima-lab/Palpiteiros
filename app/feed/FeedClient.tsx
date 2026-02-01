@@ -44,19 +44,64 @@ interface Prediction {
   userId: string
 }
 
+// PRD v3: Estrutura de sentimento
+interface Sentimento {
+  geral: {
+    score: number
+    label: string
+    distribuicao: Record<string, number>
+    totalReacoes: number
+  }
+  porTime?: Record<string, {
+    score: number
+    label: string
+    distribuicao: Record<string, number>
+    totalReacoes: number
+  }>
+  distribuicaoDisplay?: Record<string, number>
+}
+
+interface Divergencia {
+  tipo: 'sonhando' | 'resignados' | 'alinhados_positivo' | 'alinhados_negativo' | 'neutro'
+  mensagem: string
+  destaque: boolean
+}
+
+interface Fonte {
+  id: string
+  posicao: string
+  intensidade: string
+  jornalista: {
+    nome: string
+    handle?: string
+    credibilidade: number
+  }
+}
+
 interface Rumor {
   id: string
   playerName: string
   toTeam: string
   fromTeam?: string | null
   title: string
+  description?: string | null
+  contexto?: string | null
+  category?: string
+  categoria?: string
+  // PRD v3: Dois eixos
+  probabilidade?: number
+  probTrend?: string
   sentiment: number
+  sentimento?: Sentimento
+  divergencia?: Divergencia
   status: string
   createdAt: string
   signals: Signal[]
+  fontes?: Fonte[]
   predictions: Prediction[]
+  totalReacoes?: number
   signalScore?: number | null
-  isHot?: boolean // Se o rumor está "quente" (atividade nas últimas 24h)
+  isHot?: boolean
 }
 
 interface User {
@@ -204,17 +249,27 @@ function RumorCard({
   const [localSentiment, setLocalSentiment] = useState(rumor.sentiment)
   const [localPredictions, setLocalPredictions] = useState(rumor.predictions.length)
 
-  // Estado para reações (simulado baseado em predictions)
+  // PRD v3: Estado para reações com novos emojis
   const [reactionCounts, setReactionCounts] = useState<Record<ReactionEmoji, number>>(() => {
-    // Converter predictions para contagem de reações
+    // Usar distribuição do PRD v3 se disponível
+    if (rumor.sentimento?.distribuicaoDisplay) {
+      return {
+        '🔥': rumor.sentimento.distribuicaoDisplay['🔥'] || 0,
+        '😍': rumor.sentimento.distribuicaoDisplay['😍'] || 0,
+        '😐': rumor.sentimento.distribuicaoDisplay['😐'] || 0,
+        '👎': rumor.sentimento.distribuicaoDisplay['👎'] || 0,
+        '💀': rumor.sentimento.distribuicaoDisplay['💀'] || 0,
+      }
+    }
+    // Fallback: converter predictions para contagem de reações
     const positive = rumor.predictions.filter(p => p.prediction).length
     const negative = rumor.predictions.length - positive
     return {
       '🔥': Math.floor(positive * 0.4),
-      '👍': Math.ceil(positive * 0.6),
+      '😍': Math.ceil(positive * 0.6),
       '😐': 0,
-      '😕': Math.floor(negative * 0.6),
-      '💔': Math.ceil(negative * 0.4),
+      '👎': Math.floor(negative * 0.6),
+      '💀': Math.ceil(negative * 0.4),
     }
   })
   const [userReaction, setUserReaction] = useState<ReactionEmoji | null>(null)
@@ -251,6 +306,17 @@ function RumorCard({
   // Fallback para lógica antiga se isHot não estiver definido
   const isQuente = rumor.isHot ?? ((rumor.signalScore ?? 0) > 0.3 || localPredictions > 100)
   const teamColor = getTeamColor(rumor.toTeam)
+
+  // PRD v3: Probabilidade e sentimento
+  const probabilidade = rumor.probabilidade ?? Math.round(rumor.sentiment * 100)
+  const sentimentScore = rumor.sentimento?.geral?.score ?? ((rumor.sentiment - 0.5) * 4)
+
+  // Cor da probabilidade
+  const getProbColor = (prob: number) => {
+    if (prob >= 70) return COLORS.accentGreen
+    if (prob >= 40) return '#F59E0B'
+    return COLORS.colorNao
+  }
 
   const handleVote = async (prediction: boolean) => {
     if (!userId || isVoting) return
@@ -329,7 +395,37 @@ function RumorCard({
         <span style={{ fontSize: '12px', color: COLORS.textMuted }}>
           {formatTimeAgo(rumor.createdAt)}
         </span>
-        {isQuente ? (
+        {/* PRD v3: Probabilidade */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          marginLeft: 'auto',
+          background: COLORS.bgPrimary,
+          padding: '4px 10px',
+          borderRadius: '6px',
+          border: `1px solid ${COLORS.borderPrimary}`,
+        }}>
+          <span style={{ fontSize: '12px', color: COLORS.textMuted }}>📰</span>
+          <span style={{
+            fontSize: '14px',
+            fontWeight: 700,
+            color: getProbColor(probabilidade),
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>
+            {probabilidade}%
+          </span>
+          {rumor.probTrend && rumor.probTrend !== 'estavel' && (
+            <span style={{
+              fontSize: '12px',
+              color: rumor.probTrend === 'subindo' ? COLORS.accentGreen : COLORS.colorNao,
+            }}>
+              {rumor.probTrend === 'subindo' ? '↑' : '↓'}
+            </span>
+          )}
+        </div>
+
+        {isQuente && (
           <span style={{
             fontSize: '11px',
             fontWeight: 600,
@@ -337,22 +433,9 @@ function RumorCard({
             background: `${COLORS.colorQuente}20`,
             padding: '3px 8px',
             borderRadius: '4px',
-            marginLeft: 'auto',
             animation: 'pulse 2s infinite',
           }}>
-            🔥 QUENTE
-          </span>
-        ) : (
-          <span style={{
-            fontSize: '11px',
-            fontWeight: 500,
-            color: COLORS.textMuted,
-            background: `${COLORS.textMuted}15`,
-            padding: '3px 8px',
-            borderRadius: '4px',
-            marginLeft: 'auto',
-          }}>
-            ❄️ Esfriou
+            🔥
           </span>
         )}
       </div>
@@ -368,44 +451,62 @@ function RumorCard({
         {rumor.title}
       </h3>
 
-      {/* Barra de Progresso */}
+      {/* PRD v3: Sentimento da Torcida */}
       <div style={{ marginBottom: '14px' }}>
         <div style={{
-          height: '8px',
-          background: COLORS.borderPrimary,
-          borderRadius: '4px',
-          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
           marginBottom: '6px',
         }}>
-          <div style={{
-            height: '100%',
-            width: `${percentualVai}%`,
-            background: percentualVai > 50
-              ? `linear-gradient(90deg, ${COLORS.accentGreen}, ${COLORS.accentGreenLight})`
-              : `linear-gradient(90deg, #6B7280, #9CA3AF)`,
-            borderRadius: '4px',
-            transition: 'width 0.5s ease',
-          }} />
+          <span style={{
+            fontSize: '11px',
+            color: COLORS.textMuted,
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+          }}>
+            Sentimento da Torcida
+          </span>
+          <span style={{
+            fontSize: '12px',
+            fontWeight: 600,
+            color: sentimentScore >= 0.3 ? COLORS.accentGreen :
+                   sentimentScore <= -0.3 ? COLORS.colorNao : COLORS.textMuted,
+            fontFamily: "'JetBrains Mono', monospace",
+          }}>
+            {sentimentScore > 0 ? '+' : ''}{sentimentScore.toFixed(1)}
+          </span>
         </div>
+        {/* Barra de emojis PRD v3 */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: '12px',
-          fontFamily: "'JetBrains Mono', monospace",
-          color: COLORS.textMuted,
+          height: '8px',
+          borderRadius: '4px',
+          overflow: 'hidden',
+          background: COLORS.borderPrimary,
         }}>
-          <span style={{
-            color: percentualVai > 50 ? COLORS.accentGreen : COLORS.textMuted,
-            fontWeight: percentualVai > 50 ? 600 : 400,
-          }}>
-            {percentualVai}% VAI
-          </span>
-          <span style={{
-            color: percentualVai <= 50 ? COLORS.colorNao : COLORS.textMuted,
-            fontWeight: percentualVai <= 50 ? 600 : 400,
-          }}>
-            {100 - percentualVai}% NÃO VAI
-          </span>
+          {Object.entries(reactionCounts).map(([emoji, count]) => {
+            const total = Object.values(reactionCounts).reduce((a, b) => a + b, 0)
+            const percent = total > 0 ? (count / total) * 100 : 0
+            if (percent === 0) return null
+            // PRD v3: Cores dos novos emojis
+            const colors: Record<string, string> = {
+              '🔥': '#F97316',  // Laranja
+              '😍': '#10B981',  // Verde
+              '😐': '#71717A',  // Cinza
+              '👎': '#F59E0B',  // Amarelo
+              '💀': '#7C3AED',  // Roxo
+            }
+            return (
+              <div
+                key={emoji}
+                style={{
+                  width: `${percent}%`,
+                  background: colors[emoji] || '#71717A',
+                }}
+              />
+            )
+          })}
         </div>
       </div>
 

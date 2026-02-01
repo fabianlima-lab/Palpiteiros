@@ -8,19 +8,52 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+// ===============================================
+// ENUMS PRD v3
+// ===============================================
+
+enum EmojiReacao {
+  FOGO      // 🔥 +2 (Quero muito)
+  AMOR      // 😍 +1 (Gosto)
+  NEUTRO    // 😐 0 (Tanto faz)
+  NAO_GOSTO // 👎 -1 (Não gosto)
+  PESSIMO   // 💀 -2 (Péssima ideia)
+}
+
+enum CategoriaRumor {
+  REFORCO    // Transferência entrada
+  SAIDA      // Transferência saída
+  RENOVACAO  // Renovação de contrato
+  COMISSAO   // Demissão/contratação de técnico
+  ESCALACAO  // Escalação de jogo
+  LESAO      // Lesão/recuperação
+  SELECAO    // Convocação seleção
+  PREMIO     // Premiação individual
+  CLUBE      // Decisão institucional
+  DISCIPLINA // Punição/julgamento
+}
+
+enum StatusRumor {
+  ABERTO
+  CONFIRMADO
+  DESMENTIDO
+  EXPIRADO
+}
+
 model User {
   id          String       @id @default(cuid())
   name        String
   username    String       @unique
   avatar      String?
-  team        String?
+  team        String?      // Time que o usuário torce
   points      Int          @default(0)
   level       Int          @default(1)
   isPremium   Boolean      @default(false)
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
-  predictions Prediction[]
+  predictions Prediction[] // Legado - será deprecado
   badges      UserBadge[]
+  reacoes     Reacao[]     // Novo sistema PRD v3
 }
 
 model Badge {
@@ -43,22 +76,37 @@ model UserBadge {
 }
 
 model Rumor {
-  id              String       @id @default(cuid())
+  id              String         @id @default(cuid())
   playerName      String
   playerImage     String?
   fromTeam        String?
   toTeam          String
   title           String
   description     String?
-  category        String       @default("transferencia")
-  sentiment       Float        @default(0.5)
-  status          String       @default("open")
+  contexto        String?        // PRD v3: frase curta explicando o cenário
+
+  // PRD v3: Categorias e status tipados
+  categoria       CategoriaRumor @default(REFORCO)
+  statusRumor     StatusRumor    @default(ABERTO)
+
+  // Legado - mantido para compatibilidade
+  category        String         @default("transferencia")
+  status          String         @default("open")
+
+  // PRD v3: Dois eixos separados
+  probabilidade   Float          @default(50)  // ALG-001: 0-100, vem das fontes jornalísticas
+  probTrend       String         @default("estavel") // subindo, caindo, estavel
+  confianca       String         @default("baixa")   // baixa, media, alta
+  sentiment       Float          @default(0.5)       // Legado - será calculado por time
+
   closesAt        DateTime
   resolvedAt      DateTime?
   resolvedOutcome Boolean?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-  predictions     Prediction[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relações legado
+  predictions     Prediction[]   // Legado - será deprecado
   signals         Signal[]
   socialPosts     SocialPost[]
 
@@ -66,7 +114,12 @@ model Rumor {
   newsItems    RumorNewsItem[]
   rumorSignals RumorSignal[]
   lastScraped  DateTime?
-  signalScore  Float?          @default(0) // Score agregado de todos os sinais
+  signalScore  Float?          @default(0)
+
+  // PRD v3: Novas relações
+  reacoes      Reacao[]        // Sistema de emojis por torcida
+  fontes       FonteRumor[]    // Fontes jornalísticas
+  tweets       TweetRumor[]    // Tweets da hashtag #palpiteiros
 }
 
 model Prediction {
@@ -204,4 +257,81 @@ model RumorSignal {
 
   @@unique([rumorId, period, source])
   @@index([rumorId, period])
+}
+
+// ===============================================
+// PRD v3: SISTEMA DE REAÇÕES (Sentimento da Torcida)
+// ===============================================
+
+model Reacao {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  rumorId      String
+  rumor        Rumor       @relation(fields: [rumorId], references: [id])
+  timeId       String      // Time que o torcedor torce (para separar sentimento por torcida)
+  emoji        EmojiReacao
+  criadoEm     DateTime    @default(now())
+  atualizadoEm DateTime    @updatedAt
+
+  @@unique([userId, rumorId]) // Uma reação por usuário por rumor
+  @@index([rumorId, timeId])  // Para queries de sentimento por time
+}
+
+// ===============================================
+// PRD v3: SISTEMA DE JORNALISTAS E FONTES
+// ===============================================
+
+model Jornalista {
+  id             String       @id @default(cuid())
+  nome           String
+  handle         String?      @unique // @twitter handle
+  veiculo        String?      // ESPN, GE, UOL, etc
+  avatar         String?
+  seguidores     Int          @default(0)
+  credibilidade  Float        @default(50)  // 0-100, começa por seguidores, refina por acerto
+  totalPrevisoes Int          @default(0)
+  acertos        Int          @default(0)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  fontes         FonteRumor[]
+}
+
+model FonteRumor {
+  id             String     @id @default(cuid())
+  rumorId        String
+  rumor          Rumor      @relation(fields: [rumorId], references: [id])
+  jornalistaId   String
+  jornalista     Jornalista @relation(fields: [jornalistaId], references: [id])
+  posicao        String     // confirma, nega, neutro
+  intensidade    String     // especula, afirma, crava
+  textoOriginal  String
+  urlOriginal    String
+  dataPublicacao DateTime
+  createdAt      DateTime   @default(now())
+
+  @@index([rumorId])
+  @@index([jornalistaId])
+}
+
+// ===============================================
+// PRD v3: TWEETS DA HASHTAG #palpiteiros
+// ===============================================
+
+model TweetRumor {
+  id        String   @id @default(cuid())
+  rumorId   String
+  rumor     Rumor    @relation(fields: [rumorId], references: [id])
+  tweetId   String   @unique // ID do tweet no X
+  autor     String   // Nome do autor
+  handle    String   // @handle
+  avatar    String?
+  texto     String
+  likes     Int      @default(0)
+  retweets  Int      @default(0)
+  criadoEm  DateTime // Data do tweet
+  aprovado  Boolean  @default(false) // Passou no filtro de segurança
+  createdAt DateTime @default(now())
+
+  @@index([rumorId])
 }

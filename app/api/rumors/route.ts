@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getPlayerTeam, TEAMS_ALIASES } from '@/src/lib/scrapers/types'
+import {
+  calcularSentimento,
+  calcularDivergencia,
+  calcularDivisaoSentimento,
+  EMOJI_DISPLAY,
+} from '@/lib/algorithms'
 
 export const dynamic = 'force-dynamic'
 
@@ -150,6 +156,14 @@ export async function GET(request: Request) {
             predictions: {
               select: { id: true, prediction: true, userId: true },
             },
+            // PRD v3: Incluir reações e fontes
+            reacoes: {
+              select: { emoji: true, timeId: true },
+            },
+            fontes: {
+              include: { jornalista: true },
+              take: 3,
+            },
           },
           orderBy,
           take: limit,
@@ -158,45 +172,99 @@ export async function GET(request: Request) {
         prisma.rumor.count({ where }),
       ])
 
-      const serializedRumors = rumors.map(r => ({
-        id: r.id,
-        playerName: r.playerName,
-        playerImage: r.playerImage,
-        fromTeam: r.fromTeam,
-        toTeam: r.toTeam,
-        title: r.title,
-        description: r.description,
-        category: r.category,
-        sentiment: r.sentiment,
-        status: r.status,
-        signalScore: r.signalScore,
-        createdAt: r.createdAt.toISOString(),
-        updatedAt: r.updatedAt.toISOString(),
-        closesAt: r.closesAt.toISOString(),
-        resolvedAt: r.resolvedAt?.toISOString() || null,
-        lastScraped: r.lastScraped?.toISOString() || null,
-        signals: r.signals.map(s => ({
-          id: s.id,
-          signal: s.signal,
-          confidence: s.confidence,
-          createdAt: s.createdAt.toISOString(),
-          influencer: {
-            id: s.influencer.id,
-            name: s.influencer.name,
-            username: s.influencer.username,
-            outlet: s.influencer.outlet,
-            trustScore: s.influencer.trustScore,
-            createdAt: s.influencer.createdAt.toISOString(),
-            updatedAt: s.influencer.updatedAt.toISOString(),
+      const serializedRumors = rumors.map(r => {
+        // PRD v3: Calcular sentimento
+        const reacoesArray = r.reacoes || []
+        const sentimentoGeral = calcularSentimento(reacoesArray)
+
+        // Agrupar por time
+        const reacoesPortime: Record<string, typeof reacoesArray> = {}
+        for (const reacao of reacoesArray) {
+          if (!reacoesPortime[reacao.timeId]) {
+            reacoesPortime[reacao.timeId] = []
+          }
+          reacoesPortime[reacao.timeId].push(reacao)
+        }
+        const sentimentoPorTime: Record<string, ReturnType<typeof calcularSentimento>> = {}
+        for (const [timeId, reacoes] of Object.entries(reacoesPortime)) {
+          sentimentoPorTime[timeId] = calcularSentimento(reacoes)
+        }
+
+        const divergencia = calcularDivergencia(r.probabilidade, sentimentoGeral.score)
+
+        return {
+          id: r.id,
+          playerName: r.playerName,
+          playerImage: r.playerImage,
+          fromTeam: r.fromTeam,
+          toTeam: r.toTeam,
+          title: r.title,
+          description: r.description,
+          contexto: r.contexto,
+          category: r.category,
+          categoria: r.categoria,
+          statusRumor: r.statusRumor,
+          probabilidade: r.probabilidade,
+          probTrend: r.probTrend,
+          confianca: r.confianca,
+          sentiment: r.sentiment,
+          sentimento: {
+            geral: sentimentoGeral,
+            porTime: sentimentoPorTime,
+            distribuicaoDisplay: {
+              '🔥': sentimentoGeral.distribuicao.FOGO,
+              '😍': sentimentoGeral.distribuicao.AMOR,
+              '😐': sentimentoGeral.distribuicao.NEUTRO,
+              '👎': sentimentoGeral.distribuicao.NAO_GOSTO,
+              '💀': sentimentoGeral.distribuicao.PESSIMO,
+            },
           },
-        })),
-        predictions: r.predictions.map(p => ({
-          id: p.id,
-          prediction: p.prediction,
-          userId: p.userId,
-          createdAt: '',
-        })),
-      }))
+          divergencia,
+          status: r.status,
+          signalScore: r.signalScore,
+          createdAt: r.createdAt.toISOString(),
+          updatedAt: r.updatedAt.toISOString(),
+          closesAt: r.closesAt.toISOString(),
+          resolvedAt: r.resolvedAt?.toISOString() || null,
+          lastScraped: r.lastScraped?.toISOString() || null,
+          signals: r.signals.map(s => ({
+            id: s.id,
+            signal: s.signal,
+            confidence: s.confidence,
+            createdAt: s.createdAt.toISOString(),
+            influencer: {
+              id: s.influencer.id,
+              name: s.influencer.name,
+              username: s.influencer.username,
+              outlet: s.influencer.outlet,
+              trustScore: s.influencer.trustScore,
+              createdAt: s.influencer.createdAt.toISOString(),
+              updatedAt: s.influencer.updatedAt.toISOString(),
+            },
+          })),
+          fontes: (r.fontes || []).map(f => ({
+            id: f.id,
+            posicao: f.posicao,
+            intensidade: f.intensidade,
+            textoOriginal: f.textoOriginal,
+            dataPublicacao: f.dataPublicacao.toISOString(),
+            jornalista: {
+              id: f.jornalista.id,
+              nome: f.jornalista.nome,
+              handle: f.jornalista.handle,
+              veiculo: f.jornalista.veiculo,
+              credibilidade: f.jornalista.credibilidade,
+            },
+          })),
+          predictions: r.predictions.map(p => ({
+            id: p.id,
+            prediction: p.prediction,
+            userId: p.userId,
+            createdAt: '',
+          })),
+          totalReacoes: reacoesArray.length,
+        }
+      })
 
       return NextResponse.json({
         rumors: serializedRumors,
@@ -227,6 +295,15 @@ export async function GET(request: Request) {
         rumorSignals: {
           where: { period: { gte: last24h } },
           select: { mentions: true, velocity: true },
+        },
+        // PRD v3: Incluir reações para calcular sentimento
+        reacoes: {
+          select: { emoji: true, timeId: true },
+        },
+        // PRD v3: Incluir fontes para mostrar jornalistas
+        fontes: {
+          include: { jornalista: true },
+          take: 3,
         },
       },
     })
@@ -294,46 +371,123 @@ export async function GET(request: Request) {
     const paginatedRumors = scoredRumors.slice(offset, offset + limit)
     const total = scoredRumors.length
 
-    const serializedRumors = paginatedRumors.map(r => ({
-      id: r.id,
-      playerName: r.playerName,
-      playerImage: r.playerImage,
-      fromTeam: r.fromTeam,
-      toTeam: r.toTeam,
-      title: r.title,
-      description: r.description,
-      category: r.category,
-      sentiment: r.sentiment,
-      status: r.status,
-      signalScore: r.signalScore,
-      isHot: r._isHot, // Flag para mostrar badge 🔥 ou ❄️
-      createdAt: r.createdAt.toISOString(),
-      updatedAt: r.updatedAt.toISOString(),
-      closesAt: r.closesAt.toISOString(),
-      resolvedAt: r.resolvedAt?.toISOString() || null,
-      lastScraped: r.lastScraped?.toISOString() || null,
-      signals: r.signals.map(s => ({
-        id: s.id,
-        signal: s.signal,
-        confidence: s.confidence,
-        createdAt: s.createdAt.toISOString(),
-        influencer: {
-          id: s.influencer.id,
-          name: s.influencer.name,
-          username: s.influencer.username,
-          outlet: s.influencer.outlet,
-          trustScore: s.influencer.trustScore,
-          createdAt: s.influencer.createdAt.toISOString(),
-          updatedAt: s.influencer.updatedAt.toISOString(),
+    const serializedRumors = paginatedRumors.map(r => {
+      // PRD v3: Calcular sentimento por time
+      const reacoesArray = r.reacoes || []
+      const sentimentoGeral = calcularSentimento(reacoesArray)
+
+      // Agrupar reações por time
+      const reacoesPortime: Record<string, typeof reacoesArray> = {}
+      for (const reacao of reacoesArray) {
+        if (!reacoesPortime[reacao.timeId]) {
+          reacoesPortime[reacao.timeId] = []
+        }
+        reacoesPortime[reacao.timeId].push(reacao)
+      }
+
+      const sentimentoPorTime: Record<string, ReturnType<typeof calcularSentimento>> = {}
+      for (const [timeId, reacoes] of Object.entries(reacoesPortime)) {
+        sentimentoPorTime[timeId] = calcularSentimento(reacoes)
+      }
+
+      // PRD v3: Calcular divergência (probabilidade vs sentimento)
+      const divergencia = calcularDivergencia(r.probabilidade, sentimentoGeral.score)
+
+      // PRD v3: Calcular divisão de sentimento
+      const divisaoSentimento = calcularDivisaoSentimento(sentimentoGeral.distribuicao)
+
+      return {
+        id: r.id,
+        playerName: r.playerName,
+        playerImage: r.playerImage,
+        fromTeam: r.fromTeam,
+        toTeam: r.toTeam,
+        title: r.title,
+        description: r.description,
+        contexto: r.contexto,
+        category: r.category,
+        categoria: r.categoria,
+        statusRumor: r.statusRumor,
+
+        // PRD v3: Dois eixos separados
+        probabilidade: r.probabilidade,
+        probTrend: r.probTrend,
+        confianca: r.confianca,
+
+        // PRD v3: Sentimento (legado para compatibilidade)
+        sentiment: r.sentiment,
+
+        // PRD v3: Sentimento estruturado
+        sentimento: {
+          geral: sentimentoGeral,
+          porTime: sentimentoPorTime,
+          distribuicaoDisplay: {
+            '🔥': sentimentoGeral.distribuicao.FOGO,
+            '😍': sentimentoGeral.distribuicao.AMOR,
+            '😐': sentimentoGeral.distribuicao.NEUTRO,
+            '👎': sentimentoGeral.distribuicao.NAO_GOSTO,
+            '💀': sentimentoGeral.distribuicao.PESSIMO,
+          },
         },
-      })),
-      predictions: r.predictions.map(p => ({
-        id: p.id,
-        prediction: p.prediction,
-        userId: p.userId,
-        createdAt: '',
-      })),
-    }))
+
+        // PRD v3: Divergência
+        divergencia,
+        divisaoSentimento,
+
+        status: r.status,
+        signalScore: r.signalScore,
+        isHot: r._isHot,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        closesAt: r.closesAt.toISOString(),
+        resolvedAt: r.resolvedAt?.toISOString() || null,
+        lastScraped: r.lastScraped?.toISOString() || null,
+
+        // Sinais de influenciadores (legado)
+        signals: r.signals.map(s => ({
+          id: s.id,
+          signal: s.signal,
+          confidence: s.confidence,
+          createdAt: s.createdAt.toISOString(),
+          influencer: {
+            id: s.influencer.id,
+            name: s.influencer.name,
+            username: s.influencer.username,
+            outlet: s.influencer.outlet,
+            trustScore: s.influencer.trustScore,
+            createdAt: s.influencer.createdAt.toISOString(),
+            updatedAt: s.influencer.updatedAt.toISOString(),
+          },
+        })),
+
+        // PRD v3: Fontes de jornalistas
+        fontes: (r.fontes || []).map(f => ({
+          id: f.id,
+          posicao: f.posicao,
+          intensidade: f.intensidade,
+          textoOriginal: f.textoOriginal,
+          dataPublicacao: f.dataPublicacao.toISOString(),
+          jornalista: {
+            id: f.jornalista.id,
+            nome: f.jornalista.nome,
+            handle: f.jornalista.handle,
+            veiculo: f.jornalista.veiculo,
+            credibilidade: f.jornalista.credibilidade,
+          },
+        })),
+
+        // Predictions (legado)
+        predictions: r.predictions.map(p => ({
+          id: p.id,
+          prediction: p.prediction,
+          userId: p.userId,
+          createdAt: '',
+        })),
+
+        // Total de reações
+        totalReacoes: reacoesArray.length,
+      }
+    })
 
     return NextResponse.json({
       rumors: serializedRumors,

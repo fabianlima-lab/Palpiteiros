@@ -1,29 +1,118 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { EmojiReacao } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
-// Mapear emoji para valor de sentimento
-const REACTION_SENTIMENTS: Record<string, number> = {
-  '🔥': 1.0,   // Quero muito
-  '👍': 0.75,  // Seria bom
-  '😐': 0.5,   // Tanto faz
-  '😕': 0.25,  // Não curti
-  '💔': 0.0,   // Não quero
+// PRD v3: Valores dos emojis (-2 a +2)
+const EMOJI_VALUES: Record<EmojiReacao, number> = {
+  FOGO: 2,       // 🔥 Quero muito
+  AMOR: 1,       // 😍 Gosto
+  NEUTRO: 0,     // 😐 Tanto faz
+  NAO_GOSTO: -1, // 👎 Não gosto
+  PESSIMO: -2,   // 💀 Péssima ideia
+}
+
+// Mapeamento de emoji string para enum
+const EMOJI_MAP: Record<string, EmojiReacao> = {
+  '🔥': EmojiReacao.FOGO,
+  '😍': EmojiReacao.AMOR,
+  '😐': EmojiReacao.NEUTRO,
+  '👎': EmojiReacao.NAO_GOSTO,
+  '💀': EmojiReacao.PESSIMO,
+  // Aliases para compatibilidade
+  'FOGO': EmojiReacao.FOGO,
+  'AMOR': EmojiReacao.AMOR,
+  'NEUTRO': EmojiReacao.NEUTRO,
+  'NAO_GOSTO': EmojiReacao.NAO_GOSTO,
+  'PESSIMO': EmojiReacao.PESSIMO,
+}
+
+// Mapeamento reverso para exibição
+const EMOJI_DISPLAY: Record<EmojiReacao, string> = {
+  FOGO: '🔥',
+  AMOR: '😍',
+  NEUTRO: '😐',
+  NAO_GOSTO: '👎',
+  PESSIMO: '💀',
+}
+
+/**
+ * ALG-002: Calcula sentimento da torcida (PRD v3)
+ * Score: -2.0 a +2.0
+ */
+function calcularSentimento(reacoes: { emoji: EmojiReacao }[]): {
+  score: number
+  label: string
+  distribuicao: Record<EmojiReacao, number>
+  totalReacoes: number
+} {
+  const total = reacoes.length
+
+  if (total === 0) {
+    return {
+      score: 0,
+      label: 'dividido',
+      distribuicao: { FOGO: 0, AMOR: 0, NEUTRO: 0, NAO_GOSTO: 0, PESSIMO: 0 },
+      totalReacoes: 0,
+    }
+  }
+
+  // Contar por emoji
+  const distribuicao: Record<EmojiReacao, number> = {
+    FOGO: 0,
+    AMOR: 0,
+    NEUTRO: 0,
+    NAO_GOSTO: 0,
+    PESSIMO: 0,
+  }
+  let somaValores = 0
+
+  for (const reacao of reacoes) {
+    distribuicao[reacao.emoji]++
+    somaValores += EMOJI_VALUES[reacao.emoji]
+  }
+
+  const score = Math.round((somaValores / total) * 100) / 100
+
+  const label =
+    score >= 1.0 ? 'positivo_forte' :
+    score >= 0.3 ? 'positivo' :
+    score >= -0.3 ? 'dividido' :
+    score >= -1.0 ? 'negativo' :
+    'negativo_forte'
+
+  return { score, label, distribuicao, totalReacoes: total }
 }
 
 /**
  * POST /api/reactions
- * Registra uma reação de sentimento para um rumor
+ * Registra uma reação de sentimento para um rumor (PRD v3)
+ *
+ * Body: {
+ *   rumorId: string
+ *   userId: string
+ *   timeId: string     // Time que o torcedor torce
+ *   reaction: string   // Emoji (🔥, 😍, 😐, 👎, 💀) ou nome (FOGO, AMOR, etc)
+ * }
  */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { rumorId, userId, reaction } = body
+    const { rumorId, userId, timeId, reaction } = body
 
     if (!rumorId || !reaction) {
       return NextResponse.json(
         { error: 'rumorId and reaction are required' },
+        { status: 400 }
+      )
+    }
+
+    // Converter reaction para enum
+    const emoji = EMOJI_MAP[reaction]
+    if (!emoji) {
+      return NextResponse.json(
+        { error: 'Invalid reaction. Use: 🔥, 😍, 😐, 👎, or 💀' },
         { status: 400 }
       )
     }
@@ -40,75 +129,75 @@ export async function POST(request: Request) {
       )
     }
 
-    // Criar ou atualizar a reação usando Prediction (reaproveitando o modelo)
-    // O campo prediction será usado como sentimento (true = positivo, false = negativo)
-    // Vamos armazenar a reação no campo "prediction" como boolean baseado no sentimento
-    const sentiment = REACTION_SENTIMENTS[reaction] ?? 0.5
-    const isPositive = sentiment >= 0.5
-
+    // Determinar userId e timeId
     const effectiveUserId = userId || `anon_${Date.now()}`
+    const effectiveTimeId = timeId || rumor.toTeam?.toLowerCase() || 'brasil'
 
-    // Verificar se já existe uma prediction deste usuário
-    const existing = await prisma.prediction.findFirst({
-      where: {
-        rumorId,
-        userId: effectiveUserId,
-      },
+    // Garantir que o user existe
+    let user = await prisma.user.findUnique({
+      where: { id: effectiveUserId },
     })
 
-    if (existing) {
-      // Atualizar
-      await prisma.prediction.update({
-        where: { id: existing.id },
-        data: { prediction: isPositive },
-      })
-    } else {
-      // Criar nova
-      // Primeiro garantir que o user existe
-      const user = await prisma.user.findUnique({
-        where: { id: effectiveUserId },
-      })
-
-      if (!user) {
-        // Criar user anônimo temporário
-        await prisma.user.create({
-          data: {
-            id: effectiveUserId,
-            name: 'Torcedor Anônimo',
-            username: `user_${Date.now()}`,
-          },
-        })
-      }
-
-      await prisma.prediction.create({
+    if (!user) {
+      // Criar user anônimo temporário
+      user = await prisma.user.create({
         data: {
-          rumorId,
-          userId: effectiveUserId,
-          prediction: isPositive,
+          id: effectiveUserId,
+          name: 'Torcedor Anônimo',
+          username: `user_${Date.now()}`,
+          team: effectiveTimeId,
         },
       })
     }
 
-    // Recalcular sentimento médio do rumor
-    const allPredictions = await prisma.prediction.findMany({
+    // Upsert da reação (uma por usuário por rumor)
+    await prisma.reacao.upsert({
+      where: {
+        userId_rumorId: {
+          userId: effectiveUserId,
+          rumorId,
+        },
+      },
+      update: {
+        emoji,
+        timeId: effectiveTimeId,
+        atualizadoEm: new Date(),
+      },
+      create: {
+        userId: effectiveUserId,
+        rumorId,
+        timeId: effectiveTimeId,
+        emoji,
+      },
+    })
+
+    // Buscar todas as reações do rumor agrupadas por time
+    const todasReacoes = await prisma.reacao.findMany({
       where: { rumorId },
     })
 
-    const positiveCount = allPredictions.filter(p => p.prediction).length
-    const totalCount = allPredictions.length
-    const newSentiment = totalCount > 0 ? positiveCount / totalCount : 0.5
+    // Calcular sentimento geral
+    const sentimentoGeral = calcularSentimento(todasReacoes)
 
-    // Atualizar o rumor
-    await prisma.rumor.update({
-      where: { id: rumorId },
-      data: { sentiment: newSentiment },
-    })
+    // Calcular sentimento do time do usuário
+    const reacoesDoTime = todasReacoes.filter(r => r.timeId === effectiveTimeId)
+    const sentimentoDoTime = calcularSentimento(reacoesDoTime)
 
     return NextResponse.json({
       success: true,
-      reaction,
-      sentiment: newSentiment,
-      totalReactions: totalCount,
+      reaction: EMOJI_DISPLAY[emoji],
+      userReaction: {
+        emoji,
+        emojiDisplay: EMOJI_DISPLAY[emoji],
+        timeId: effectiveTimeId,
+      },
+      sentimento: {
+        geral: sentimentoGeral,
+        porTime: {
+          [effectiveTimeId]: sentimentoDoTime,
+        },
+      },
+      totalReacoes: todasReacoes.length,
     })
   } catch (error) {
     console.error('Erro ao registrar reação:', error)
@@ -121,12 +210,13 @@ export async function POST(request: Request) {
 
 /**
  * GET /api/reactions?rumorId=xxx
- * Retorna contagem de reações para um rumor
+ * Retorna sentimento do rumor agrupado por time (PRD v3)
  */
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url)
     const rumorId = url.searchParams.get('rumorId')
+    const timeId = url.searchParams.get('timeId') // Opcional: filtrar por time
 
     if (!rumorId) {
       return NextResponse.json(
@@ -135,29 +225,56 @@ export async function GET(request: Request) {
       )
     }
 
-    // Buscar todas as predictions
-    const predictions = await prisma.prediction.findMany({
+    // Buscar todas as reações
+    const reacoes = await prisma.reacao.findMany({
       where: { rumorId },
     })
 
-    // Simular contagem de reações baseado nas predictions
-    // Como não temos o emoji salvo, vamos inferir do prediction boolean
-    const positiveCount = predictions.filter(p => p.prediction).length
-    const negativeCount = predictions.filter(p => !p.prediction).length
-
-    // Distribuir aproximadamente entre as reações
-    const reactionCounts = {
-      '🔥': Math.floor(positiveCount * 0.4),
-      '👍': Math.ceil(positiveCount * 0.6),
-      '😐': 0,
-      '😕': Math.ceil(negativeCount * 0.6),
-      '💔': Math.floor(negativeCount * 0.4),
+    // Agrupar por time
+    const porTime: Record<string, { emoji: EmojiReacao }[]> = {}
+    for (const reacao of reacoes) {
+      if (!porTime[reacao.timeId]) {
+        porTime[reacao.timeId] = []
+      }
+      porTime[reacao.timeId].push({ emoji: reacao.emoji })
     }
 
+    // Calcular sentimento por time
+    const sentimentoPorTime: Record<string, ReturnType<typeof calcularSentimento>> = {}
+    for (const [time, reacoesTime] of Object.entries(porTime)) {
+      sentimentoPorTime[time] = calcularSentimento(reacoesTime)
+    }
+
+    // Calcular sentimento geral
+    const sentimentoGeral = calcularSentimento(reacoes.map(r => ({ emoji: r.emoji })))
+
+    // Se pediu filtro por time específico
+    if (timeId && sentimentoPorTime[timeId]) {
+      return NextResponse.json({
+        rumorId,
+        timeId,
+        sentimento: sentimentoPorTime[timeId],
+        totalReacoes: reacoes.length,
+      })
+    }
+
+    // Retornar todos os times
     return NextResponse.json({
       rumorId,
-      reactionCounts,
-      totalReactions: predictions.length,
+      sentimento: {
+        geral: sentimentoGeral,
+        porTime: sentimentoPorTime,
+      },
+      times: Object.keys(porTime),
+      totalReacoes: reacoes.length,
+      // Para compatibilidade com o frontend antigo
+      reactionCounts: {
+        '🔥': sentimentoGeral.distribuicao.FOGO,
+        '😍': sentimentoGeral.distribuicao.AMOR,
+        '😐': sentimentoGeral.distribuicao.NEUTRO,
+        '👎': sentimentoGeral.distribuicao.NAO_GOSTO,
+        '💀': sentimentoGeral.distribuicao.PESSIMO,
+      },
     })
   } catch (error) {
     console.error('Erro ao buscar reações:', error)
