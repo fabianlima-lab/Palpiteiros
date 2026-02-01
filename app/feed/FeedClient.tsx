@@ -73,7 +73,7 @@ interface Fonte {
   intensidade: string
   jornalista: {
     nome: string
-    handle?: string
+    handle?: string | null
     credibilidade: number
   }
 }
@@ -120,6 +120,18 @@ interface TopUser {
   points: number
 }
 
+// PRD v3: Top Fontes (jornalistas)
+interface TopFonte {
+  id: string
+  rank: number
+  nome: string
+  handle?: string | null
+  veiculo?: string | null
+  credibilidade: number
+  totalPrevisoes: number
+  taxaAcerto: string
+}
+
 interface NewsItem {
   id: string
   source: string
@@ -141,6 +153,7 @@ interface FeedClientProps {
   initialRumors: Rumor[]
   user: User | null
   topUsers: TopUser[]
+  topFontes?: TopFonte[]
 }
 
 // Helper para calcular tempo relativo
@@ -741,7 +754,7 @@ function RumorCard({
 
 // TIMES agora vem de @/lib/teams com escudos reais
 
-export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
+export function FeedClient({ initialRumors, user, topUsers, topFontes = [] }: FeedClientProps) {
   const [rumors, setRumors] = useState(initialRumors)
   const [filtro, setFiltro] = useState<'quentes' | 'recentes' | 'fechando'>('quentes')
   const [showUpsellModal, setShowUpsellModal] = useState(false)
@@ -1045,7 +1058,7 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
                 }}
               >
                 ✨ Liberar todos<br />
-                <span style={{ fontSize: '11px', fontWeight: 400, opacity: 0.8 }}>R$ 29,90/mês</span>
+                <span style={{ fontSize: '11px', fontWeight: 400, opacity: 0.8 }}>R$ 14,90/mes</span>
               </button>
             </div>
           )}
@@ -1200,7 +1213,7 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
             </div>
           </div>
 
-          {/* Top Palpiteiros */}
+          {/* PRD v3: Top Fontes (jornalistas) */}
           <div style={{
             background: COLORS.bgSecondary,
             borderRadius: '12px',
@@ -1214,35 +1227,56 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
               alignItems: 'center',
               gap: '8px',
             }}>
-              🏆 Top Palpiteiros
+              🏆 Top Fontes
             </div>
-            {topUsers.map((p, i) => (
-              <div key={p.id} style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px',
-                padding: '10px 0',
-                borderBottom: i < topUsers.length - 1 ? `1px solid ${COLORS.borderPrimary}` : 'none',
-              }}>
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: `linear-gradient(135deg, ${COLORS.accentGreen}, ${COLORS.accentGreenDark})`,
+            {topFontes.length > 0 ? (
+              topFontes.map((fonte, i) => (
+                <div key={fonte.id} style={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '14px',
-                  fontWeight: 600,
+                  gap: '12px',
+                  padding: '10px 0',
+                  borderBottom: i < topFontes.length - 1 ? `1px solid ${COLORS.borderPrimary}` : 'none',
                 }}>
-                  {p.name.charAt(0).toUpperCase()}
+                  <div style={{
+                    width: '24px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: i < 3 ? COLORS.accentGreen : COLORS.textMuted,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    {fonte.rank}.
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}>
+                      {fonte.nome}
+                    </div>
+                    <div style={{ fontSize: '11px', color: COLORS.textMuted }}>
+                      {fonte.totalPrevisoes} previsoes
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: fonte.credibilidade >= 80 ? COLORS.accentGreen :
+                           fonte.credibilidade >= 60 ? '#F59E0B' : COLORS.colorNao,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    {fonte.taxaAcerto}
+                  </div>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 500 }}>@{p.username}</div>
-                  <div style={{ fontSize: '12px', color: COLORS.textMuted }}>{p.points} pontos</div>
-                </div>
+              ))
+            ) : (
+              <div style={{ fontSize: '13px', color: COLORS.textMuted, textAlign: 'center', padding: '12px 0' }}>
+                Carregando fontes...
               </div>
-            ))}
+            )}
           </div>
 
           {/* CTA Box */}
@@ -1371,7 +1405,7 @@ export function FeedClient({ initialRumors, user, topUsers }: FeedClientProps) {
               textDecoration: 'none',
               textAlign: 'center',
             }}>
-              Assinar Premium - R$ 29,90/mês
+              Assinar Premium - R$ 14,90/mes
             </Link>
           </div>
         </div>

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { ReactionPicker, SentimentBar, ReactionEmoji } from './ReactionPicker'
+import { ReactionPicker, ReactionEmoji, REACTIONS } from './ReactionPicker'
 
 interface Signal {
   id: string
@@ -88,20 +88,29 @@ interface RumorCardProps {
 
 // PRD v3: Categorias atualizadas
 const CATEGORY_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  transferencia: { label: 'Reforço', emoji: '⚽', color: '#10B981' },
-  REFORCO: { label: 'Reforço', emoji: '⚽', color: '#10B981' },
-  SAIDA: { label: 'Saída', emoji: '👋', color: '#EF4444' },
-  RENOVACAO: { label: 'Renovação', emoji: '📝', color: '#F59E0B' },
-  COMISSAO: { label: 'Comissão', emoji: '📋', color: '#8B5CF6' },
-  ESCALACAO: { label: 'Escalação', emoji: '📊', color: '#3B82F6' },
-  LESAO: { label: 'Lesão', emoji: '🏥', color: '#EF4444' },
-  SELECAO: { label: 'Seleção', emoji: '🇧🇷', color: '#10B981' },
-  PREMIO: { label: 'Prêmio', emoji: '🏆', color: '#F59E0B' },
-  CLUBE: { label: 'Clube', emoji: '🏟️', color: '#6B7280' },
-  DISCIPLINA: { label: 'Disciplina', emoji: '⚖️', color: '#EF4444' },
-  tecnico: { label: 'Técnico', emoji: '📋', color: '#8B5CF6' },
-  titulo: { label: 'Título', emoji: '🏆', color: '#F59E0B' },
-  selecao: { label: 'Seleção', emoji: '🇧🇷', color: '#10B981' },
+  transferencia: { label: 'Reforco', emoji: '', color: '#10B981' },
+  REFORCO: { label: 'Reforco', emoji: '', color: '#10B981' },
+  SAIDA: { label: 'Saida', emoji: '', color: '#EF4444' },
+  RENOVACAO: { label: 'Renovacao', emoji: '', color: '#F59E0B' },
+  COMISSAO: { label: 'Comissao', emoji: '', color: '#8B5CF6' },
+  ESCALACAO: { label: 'Escalacao', emoji: '', color: '#3B82F6' },
+  LESAO: { label: 'Lesao', emoji: '', color: '#EF4444' },
+  SELECAO: { label: 'Selecao', emoji: '', color: '#10B981' },
+  PREMIO: { label: 'Premio', emoji: '', color: '#F59E0B' },
+  CLUBE: { label: 'Clube', emoji: '', color: '#6B7280' },
+  DISCIPLINA: { label: 'Disciplina', emoji: '', color: '#EF4444' },
+  tecnico: { label: 'Tecnico', emoji: '', color: '#8B5CF6' },
+  titulo: { label: 'Titulo', emoji: '', color: '#F59E0B' },
+  selecao: { label: 'Selecao', emoji: '', color: '#10B981' },
+}
+
+// PRD v3: Cores dos emojis
+const EMOJI_COLORS: Record<string, string> = {
+  '🔥': '#F97316', // Laranja
+  '😍': '#10B981', // Verde
+  '😐': '#71717A', // Cinza
+  '👎': '#EF4444', // Vermelho
+  '💀': '#7C3AED', // Roxo
 }
 
 export function RumorCard({
@@ -125,15 +134,14 @@ export function RumorCard({
 }: RumorCardProps) {
   const [selectedReaction, setSelectedReaction] = useState<ReactionEmoji | null>(null)
 
-  // Usar categoria PRD v3 se disponível
+  // Usar categoria PRD v3 se disponivel
   const categoryKey = categoria || category
   const categoryInfo = CATEGORY_LABELS[categoryKey] || CATEGORY_LABELS.transferencia
 
-  // PRD v3: Total de reações do novo sistema
+  // PRD v3: Total de reacoes do novo sistema
   const totalReactions = totalReacoesProp ?? sentimento?.geral?.totalReacoes ?? predictions.length
 
-  // PRD v3: Usar distribuição do novo sistema ou calcular do antigo
-  // Emojis PRD v3: 🔥 😍 😐 👎 💀
+  // PRD v3: Usar distribuicao do novo sistema ou calcular do antigo
   const reactionCounts: Record<ReactionEmoji, number> = sentimento?.distribuicaoDisplay
     ? {
         '🔥': sentimento.distribuicaoDisplay['🔥'] || 0,
@@ -152,39 +160,50 @@ export function RumorCard({
 
   // PRD v3: Score de sentimento (-2 a +2) ou converter do antigo (0-1)
   const sentimentScore = sentimento?.geral?.score ?? ((sentiment - 0.5) * 4)
-  const sentimentLabel = sentimento?.geral?.label ?? 'dividido'
-
-  // Cor baseada no sentimento
-  const getSentimentColor = (score: number) => {
-    if (score >= 1.0) return '#10B981' // positivo_forte (verde)
-    if (score >= 0.3) return '#34D399' // positivo (verde claro)
-    if (score >= -0.3) return '#71717A' // dividido (cinza)
-    if (score >= -1.0) return '#F97316' // negativo (laranja)
-    return '#EF4444' // negativo_forte (vermelho)
-  }
 
   // PRD v3: Cor da probabilidade
   const getProbabilidadeColor = (prob: number) => {
-    if (prob >= 70) return '#10B981' // Alta
-    if (prob >= 40) return '#F59E0B' // Média
-    return '#EF4444' // Baixa
+    if (prob >= 60) return '#10B981' // Verde
+    if (prob >= 40) return '#F59E0B' // Amarelo
+    return '#EF4444' // Vermelho
+  }
+
+  // PRD v3: Label do sentimento
+  const getSentimentLabel = (score: number) => {
+    if (score >= 1.0) return 'Muito positivo'
+    if (score >= 0.3) return 'Positivo'
+    if (score >= -0.3) return 'Dividido'
+    if (score >= -1.0) return 'Negativo'
+    return 'Muito negativo'
   }
 
   const handleReact = (emoji: ReactionEmoji) => {
     setSelectedReaction(emoji)
   }
 
-  // PRD v3: Ícone de tendência
+  // PRD v3: Icone de tendencia
   const getTrendIcon = (trend: string) => {
     if (trend === 'subindo') return '↑'
     if (trend === 'caindo') return '↓'
     return ''
   }
 
+  // Calcular porcentagens para a barra de sentimento
+  const totalForBar = Object.values(reactionCounts).reduce((a, b) => a + b, 0) || 1
+  const percentages = REACTIONS.map(r => ({
+    emoji: r.emoji,
+    percent: Math.round((reactionCounts[r.emoji] || 0) / totalForBar * 100),
+    count: reactionCounts[r.emoji] || 0,
+  })).filter(p => p.percent > 0)
+
+  // Probabilidade para exibicao (fallback para 50 se nao definida)
+  const probDisplay = probabilidade ?? 50
+  const qtdFontes = fontes?.length ?? 0
+
   return (
     <div style={{
       backgroundColor: '#18181B',
-      border: '1px solid #27272A',
+      border: divergencia?.destaque ? '1px solid #F9731650' : '1px solid #27272A',
       borderRadius: '12px',
       overflow: 'hidden',
       transition: 'all 0.2s ease',
@@ -200,15 +219,14 @@ export function RumorCard({
           paddingBottom: '12px',
         }}
       >
-        {/* Top row: Category + Hot badge + Probabilidade */}
+        {/* Top row: Category + Time + Hot badge */}
         <div style={{
           display: 'flex',
-          justifyContent: 'space-between',
           alignItems: 'center',
-          marginBottom: '10px',
           gap: '8px',
+          marginBottom: '10px',
         }}>
-          {/* Left: Category */}
+          {/* Category */}
           <span style={{
             fontSize: '11px',
             fontWeight: '600',
@@ -219,57 +237,23 @@ export function RumorCard({
             textTransform: 'uppercase',
             letterSpacing: '0.5px',
           }}>
-            {categoryInfo.emoji} {categoryInfo.label}
+            {categoryInfo.label}
           </span>
 
-          {/* Right: Hot badge + Probabilidade */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {/* Hot/Cold badge */}
-            {isHot !== undefined && (
-              <span style={{
-                fontSize: '11px',
-                fontWeight: '600',
-                color: isHot ? '#F97316' : '#71717A',
-                backgroundColor: isHot ? '#F9731620' : '#71717A20',
-                padding: '3px 8px',
-                borderRadius: '4px',
-                animation: isHot ? 'pulse 2s infinite' : 'none',
-              }}>
-                {isHot ? '🔥 QUENTE' : '❄️'}
-              </span>
-            )}
-
-            {/* PRD v3: Probabilidade (das fontes) */}
-            {probabilidade !== undefined && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                backgroundColor: '#09090B',
-                padding: '4px 10px',
-                borderRadius: '6px',
-                border: '1px solid #27272A',
-              }}>
-                <span style={{ fontSize: '12px', color: '#71717A' }}>📰</span>
-                <span style={{
-                  fontSize: '14px',
-                  fontWeight: '700',
-                  color: getProbabilidadeColor(probabilidade),
-                  fontFamily: 'JetBrains Mono, monospace',
-                }}>
-                  {probabilidade}%
-                </span>
-                {probTrend && probTrend !== 'estavel' && (
-                  <span style={{
-                    fontSize: '12px',
-                    color: probTrend === 'subindo' ? '#10B981' : '#EF4444',
-                  }}>
-                    {getTrendIcon(probTrend)}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
+          {/* Hot badge */}
+          {isHot && (
+            <span style={{
+              fontSize: '11px',
+              fontWeight: '600',
+              color: '#F97316',
+              backgroundColor: '#F9731620',
+              padding: '3px 8px',
+              borderRadius: '4px',
+              animation: 'pulse 2s infinite',
+            }}>
+              🔥
+            </span>
+          )}
         </div>
 
         {/* Title */}
@@ -299,62 +283,266 @@ export function RumorCard({
             {contexto || description}
           </p>
         )}
+      </Link>
 
-        {/* PRD v3: Divergência badge (quando há destaque) */}
-        {divergencia?.destaque && (
+      {/* PRD v3: DOIS BLOCOS LADO A LADO - Probabilidade e Sentimento */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '12px',
+        padding: '0 16px 12px',
+      }}>
+        {/* BLOCO 1: Probabilidade (das fontes) */}
+        <div style={{
+          backgroundColor: '#09090B',
+          borderRadius: '8px',
+          padding: '12px',
+          border: '1px solid #27272A',
+        }}>
           <div style={{
-            marginTop: '8px',
-            padding: '6px 10px',
-            backgroundColor: '#F9731615',
-            border: '1px solid #F9731630',
-            borderRadius: '6px',
-            fontSize: '12px',
-            color: '#F97316',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
+            marginBottom: '8px',
           }}>
-            <span>⚡</span>
-            <span>{divergencia.mensagem}</span>
+            <span style={{ fontSize: '12px' }}>📰</span>
+            <span style={{
+              fontSize: '11px',
+              color: '#71717A',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              fontWeight: '600',
+            }}>
+              Probabilidade
+            </span>
           </div>
-        )}
-      </Link>
 
-      {/* PRD v3: Barra de Sentimento */}
-      <div style={{ padding: '0 16px', marginBottom: '8px' }}>
+          {/* Numero grande */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'baseline',
+            gap: '4px',
+            marginBottom: '8px',
+          }}>
+            <span style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: getProbabilidadeColor(probDisplay),
+              fontFamily: 'JetBrains Mono, monospace',
+              lineHeight: 1,
+            }}>
+              {probDisplay}%
+            </span>
+            {probTrend && probTrend !== 'estavel' && (
+              <span style={{
+                fontSize: '16px',
+                color: probTrend === 'subindo' ? '#10B981' : '#EF4444',
+                fontWeight: '600',
+              }}>
+                {getTrendIcon(probTrend)}
+              </span>
+            )}
+          </div>
+
+          {/* Barra de probabilidade */}
+          <div style={{
+            height: '6px',
+            backgroundColor: '#27272A',
+            borderRadius: '3px',
+            overflow: 'hidden',
+            marginBottom: '6px',
+          }}>
+            <div style={{
+              height: '100%',
+              width: `${probDisplay}%`,
+              backgroundColor: getProbabilidadeColor(probDisplay),
+              borderRadius: '3px',
+              transition: 'width 0.3s ease',
+            }} />
+          </div>
+
+          {/* Info das fontes */}
+          <div style={{
+            fontSize: '11px',
+            color: '#71717A',
+          }}>
+            {qtdFontes > 0 ? (
+              <span>{qtdFontes} fonte{qtdFontes > 1 ? 's' : ''}</span>
+            ) : (
+              <span>Aguardando fontes</span>
+            )}
+          </div>
+        </div>
+
+        {/* BLOCO 2: Sentimento (da torcida) */}
         <div style={{
+          backgroundColor: '#09090B',
+          borderRadius: '8px',
+          padding: '12px',
+          border: '1px solid #27272A',
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            marginBottom: '8px',
+          }}>
+            <span style={{ fontSize: '12px' }}>👥</span>
+            <span style={{
+              fontSize: '11px',
+              color: '#71717A',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+              fontWeight: '600',
+            }}>
+              Sentimento
+            </span>
+          </div>
+
+          {/* Distribuicao de emojis em linha */}
+          <div style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '4px',
+            marginBottom: '8px',
+            minHeight: '24px',
+          }}>
+            {percentages.length > 0 ? (
+              percentages.map(p => (
+                <span key={p.emoji} style={{
+                  fontSize: '12px',
+                  color: EMOJI_COLORS[p.emoji],
+                  fontWeight: '600',
+                  fontFamily: 'JetBrains Mono, monospace',
+                }}>
+                  {p.emoji}{p.percent}%
+                </span>
+              ))
+            ) : (
+              <span style={{ fontSize: '12px', color: '#71717A' }}>
+                Sem reacoes
+              </span>
+            )}
+          </div>
+
+          {/* Barra de sentimento segmentada */}
+          <div style={{
+            height: '6px',
+            backgroundColor: '#27272A',
+            borderRadius: '3px',
+            overflow: 'hidden',
+            display: 'flex',
+            marginBottom: '6px',
+          }}>
+            {percentages.map((p, i) => (
+              <div
+                key={p.emoji}
+                style={{
+                  height: '100%',
+                  width: `${p.percent}%`,
+                  backgroundColor: EMOJI_COLORS[p.emoji],
+                  borderRadius: i === 0 ? '3px 0 0 3px' : i === percentages.length - 1 ? '0 3px 3px 0' : '0',
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Total de reacoes */}
+          <div style={{
+            fontSize: '11px',
+            color: '#71717A',
+          }}>
+            {totalReactions > 0 ? (
+              <span>{totalReactions} reacao{totalReactions > 1 ? 'es' : ''}</span>
+            ) : (
+              <span>Seja o primeiro!</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* PRD v3: Badge de Divergencia (quando ha destaque) */}
+      {divergencia?.destaque && (
+        <div style={{
+          margin: '0 16px 12px',
+          padding: '8px 12px',
+          backgroundColor: '#F9731610',
+          border: '1px solid #F9731630',
+          borderRadius: '6px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: '6px',
+          gap: '8px',
         }}>
-          <span style={{ fontSize: '11px', color: '#71717A', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-            Sentimento da Torcida
-          </span>
+          <span style={{ fontSize: '14px' }}>⚡</span>
           <span style={{
             fontSize: '12px',
-            fontWeight: '600',
-            color: getSentimentColor(sentimentScore),
-            fontFamily: 'JetBrains Mono, monospace',
+            color: '#F97316',
+            fontWeight: '500',
           }}>
-            {sentimentScore > 0 ? '+' : ''}{sentimentScore.toFixed(1)}
+            {divergencia.mensagem}
           </span>
         </div>
-        <SentimentBar reactionCounts={reactionCounts} showLabels={false} />
+      )}
+
+      {/* PRD v3: Botoes de reacao PROEMINENTES */}
+      <div style={{
+        padding: '0 16px 12px',
+      }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '6px',
+        }}>
+          {REACTIONS.map(reaction => {
+            const isSelected = selectedReaction === reaction.emoji
+            const count = reactionCounts[reaction.emoji] || 0
+            const percent = totalForBar > 0 ? Math.round(count / totalForBar * 100) : 0
+
+            return (
+              <button
+                key={reaction.emoji}
+                onClick={() => handleReact(reaction.emoji)}
+                title={reaction.label}
+                style={{
+                  flex: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '2px',
+                  padding: '8px 4px',
+                  borderRadius: '8px',
+                  border: isSelected
+                    ? `2px solid ${EMOJI_COLORS[reaction.emoji]}`
+                    : '1px solid #27272A',
+                  backgroundColor: isSelected
+                    ? `${EMOJI_COLORS[reaction.emoji]}15`
+                    : '#09090B',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <span style={{
+                  fontSize: '20px',
+                  transform: isSelected ? 'scale(1.15)' : 'scale(1)',
+                  transition: 'transform 0.15s ease',
+                }}>
+                  {reaction.emoji}
+                </span>
+                <span style={{
+                  fontSize: '10px',
+                  color: isSelected ? EMOJI_COLORS[reaction.emoji] : '#71717A',
+                  fontWeight: '600',
+                  fontFamily: 'JetBrains Mono, monospace',
+                }}>
+                  {percent > 0 ? `${percent}%` : ''}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Reactions - Compact */}
-      <div style={{ padding: '0 16px 12px' }}>
-        <ReactionPicker
-          rumorId={id}
-          userReaction={selectedReaction}
-          reactionCounts={reactionCounts}
-          onReact={handleReact}
-          compact
-        />
-      </div>
-
-      {/* Footer Stats */}
+      {/* Footer: Fontes + Compartilhar */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
@@ -363,134 +551,164 @@ export function RumorCard({
         borderTop: '1px solid #27272A',
         backgroundColor: '#0F0F12',
       }}>
-        <div style={{
-          display: 'flex',
-          gap: '12px',
-          fontSize: '12px',
-          color: '#71717A',
-        }}>
-          {(fontes && fontes.length > 0) && (
-            <span>📰 {fontes.length} fonte{fontes.length > 1 ? 's' : ''}</span>
-          )}
-          {signals.length > 0 && !fontes?.length && (
-            <span>📢 {signals.length} sinal{signals.length > 1 ? 'is' : ''}</span>
-          )}
-          {totalReactions > 0 && (
-            <span>👥 {totalReactions} reação{totalReactions > 1 ? 'ões' : ''}</span>
-          )}
-        </div>
-
-        <Link
-          href={`/rumor/${id}`}
-          style={{
-            fontSize: '12px',
-            color: '#10B981',
-            textDecoration: 'none',
-            fontWeight: '500',
-          }}
-        >
-          Ver mais →
-        </Link>
-      </div>
-
-      {/* PRD v3: Fontes de Jornalistas (se disponível) */}
-      {fontes && fontes.length > 0 && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          padding: '10px 16px',
-          borderTop: '1px solid #27272A',
-          backgroundColor: '#0F0F10',
-          gap: '8px',
-        }}>
+        {/* Fontes de jornalistas */}
+        {fontes && fontes.length > 0 ? (
           <div style={{
             display: 'flex',
-            marginRight: '6px',
+            alignItems: 'center',
+            gap: '6px',
+            flex: 1,
+            minWidth: 0,
+            overflow: 'hidden',
           }}>
             {fontes.slice(0, 3).map((fonte, i) => (
-              <div
+              <span
                 key={fonte.id}
                 style={{
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '50%',
+                  fontSize: '11px',
+                  color: '#A1A1AA',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                  fontWeight: '700',
-                  marginLeft: i > 0 ? '-8px' : '0',
-                  zIndex: 3 - i,
-                  backgroundColor: fonte.posicao === 'confirma' ? '#10B98120' : fonte.posicao === 'nega' ? '#EF444420' : '#71717A20',
-                  border: `2px solid ${fonte.posicao === 'confirma' ? '#10B981' : fonte.posicao === 'nega' ? '#EF4444' : '#71717A'}`,
-                  color: '#FAFAFA',
+                  gap: '3px',
                 }}
-                title={`${fonte.jornalista.nome} (${Math.round(fonte.jornalista.credibilidade)}%)`}
               >
-                {fonte.jornalista.nome.charAt(0)}
-              </div>
+                <span style={{
+                  color: fonte.posicao === 'confirma' ? '#10B981' : fonte.posicao === 'nega' ? '#EF4444' : '#71717A',
+                }}>
+                  {fonte.posicao === 'confirma' ? '✓' : fonte.posicao === 'nega' ? '✗' : '○'}
+                </span>
+                <span style={{ whiteSpace: 'nowrap' }}>
+                  {fonte.jornalista.nome.split(' ')[0]}
+                </span>
+                <span style={{
+                  color: '#71717A',
+                  fontFamily: 'JetBrains Mono, monospace',
+                  fontSize: '10px',
+                }}>
+                  {Math.round(fonte.jornalista.credibilidade)}%
+                </span>
+                {i < Math.min(fontes.length - 1, 2) && <span style={{ color: '#3F3F46' }}>·</span>}
+              </span>
             ))}
+            {fontes.length > 3 && (
+              <span style={{ fontSize: '11px', color: '#71717A' }}>
+                +{fontes.length - 3}
+              </span>
+            )}
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: '12px', color: '#A1A1AA' }}>
-              {fontes[0]?.jornalista.nome}
-              {fontes.length > 1 && ` e +${fontes.length - 1}`}
-            </span>
-            <span style={{
-              fontSize: '11px',
-              color: '#71717A',
-              marginLeft: '6px',
-              fontFamily: 'JetBrains Mono, monospace',
-            }}>
-              {Math.round(fontes[0]?.jornalista.credibilidade || 0)}%
-            </span>
+        ) : signals.length > 0 ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '11px',
+            color: '#71717A',
+          }}>
+            <span>📢 {signals.length} sinal{signals.length > 1 ? 'is' : ''}</span>
           </div>
-        </div>
-      )}
+        ) : (
+          <div style={{ fontSize: '11px', color: '#71717A' }}>
+            Aguardando fontes
+          </div>
+        )}
 
-      {/* Fallback: Influencer Signals Preview (sistema antigo) */}
-      {showSignals && signals.length > 0 && (!fontes || fontes.length === 0) && (
+        {/* Botoes de acao: Compartilhar + Ver mais */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          padding: '10px 16px',
-          borderTop: '1px solid #27272A',
-          backgroundColor: '#0F0F10',
+          gap: '8px',
         }}>
-          <div style={{
-            display: 'flex',
-            marginRight: '10px',
-          }}>
-            {signals.slice(0, 3).map((signal, i) => (
-              <div
-                key={signal.id}
-                style={{
-                  width: '26px',
-                  height: '26px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '10px',
-                  fontWeight: '700',
-                  marginLeft: i > 0 ? '-8px' : '0',
-                  zIndex: 3 - i,
-                  backgroundColor: signal.signal === 'favoravel' ? '#10B98120' : '#EF444420',
-                  border: `2px solid ${signal.signal === 'favoravel' ? '#10B981' : '#EF4444'}`,
-                  color: '#FAFAFA',
-                }}
-                title={signal.influencer.name}
-              >
-                {signal.influencer.name.charAt(0)}
-              </div>
-            ))}
-          </div>
-          <span style={{ fontSize: '12px', color: '#A1A1AA' }}>
-            {signals[0]?.influencer.name}
-            {signals.length > 1 && ` e mais ${signals.length - 1}`}
-          </span>
+          {/* Botao WhatsApp */}
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`${title} - Veja no Palpiteiros: ${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiros.com'}/rumor/${id}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              backgroundColor: '#25D36620',
+              color: '#25D366',
+              fontSize: '14px',
+              textDecoration: 'none',
+              transition: 'all 0.15s ease',
+            }}
+            title="Compartilhar no WhatsApp"
+          >
+            📱
+          </a>
+
+          {/* Botao X/Twitter */}
+          <a
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}`)}&url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiros.com'}/rumor/${id}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              backgroundColor: '#1DA1F220',
+              color: '#1DA1F2',
+              fontSize: '12px',
+              textDecoration: 'none',
+              fontWeight: '700',
+              transition: 'all 0.15s ease',
+            }}
+            title="Compartilhar no X"
+          >
+            𝕏
+          </a>
+
+          {/* Botao Copiar Link */}
+          <button
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiros.com'}/rumor/${id}`
+              navigator.clipboard.writeText(url)
+              // Poderia adicionar um toast aqui
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              backgroundColor: '#71717A20',
+              color: '#A1A1AA',
+              fontSize: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+            title="Copiar link"
+          >
+            🔗
+          </button>
+
+          <Link
+            href={`/rumor/${id}`}
+            style={{
+              fontSize: '12px',
+              color: '#10B981',
+              textDecoration: 'none',
+              fontWeight: '500',
+              marginLeft: '4px',
+            }}
+          >
+            Ver mais →
+          </Link>
         </div>
-      )}
+      </div>
 
       <style jsx>{`
         @keyframes pulse {

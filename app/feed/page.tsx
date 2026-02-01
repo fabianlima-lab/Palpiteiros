@@ -140,7 +140,7 @@ export default async function FeedPage() {
     // Data de 24h atrás para calcular atividade recente
     const last24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
 
-    // Buscar rumores ativos com relacionamentos
+    // Buscar rumores ativos com relacionamentos (incluindo PRD v3)
     const rumors = await prisma.rumor.findMany({
       where: { status: 'open' },
       include: {
@@ -161,6 +161,19 @@ export default async function FeedPage() {
           select: {
             mentions: true,
             velocity: true,
+          },
+        },
+        // PRD v3: Incluir fontes de jornalistas
+        fontes: {
+          include: {
+            jornalista: true,
+          },
+        },
+        // PRD v3: Incluir reacoes para sentimento
+        reacoes: {
+          select: {
+            emoji: true,
+            timeId: true,
           },
         },
       },
@@ -234,47 +247,153 @@ export default async function FeedPage() {
       return b._relevanceScore - a._relevanceScore
     })
 
+    // PRD v3: Calcular sentimento por emoji
+    const calcularSentimento = (reacoes: { emoji: string; timeId: string }[]) => {
+      const EMOJI_VALUES: Record<string, number> = {
+        FOGO: 2, AMOR: 1, NEUTRO: 0, NAO_GOSTO: -1, PESSIMO: -2,
+      }
+      const EMOJI_DISPLAY: Record<string, string> = {
+        FOGO: '🔥', AMOR: '😍', NEUTRO: '😐', NAO_GOSTO: '👎', PESSIMO: '💀',
+      }
+
+      const total = reacoes.length
+      if (total === 0) {
+        return {
+          geral: { score: 0, label: 'dividido', distribuicao: {}, totalReacoes: 0 },
+          distribuicaoDisplay: { '🔥': 0, '😍': 0, '😐': 0, '👎': 0, '💀': 0 },
+        }
+      }
+
+      const distribuicao: Record<string, number> = { FOGO: 0, AMOR: 0, NEUTRO: 0, NAO_GOSTO: 0, PESSIMO: 0 }
+      let somaValores = 0
+
+      for (const reacao of reacoes) {
+        distribuicao[reacao.emoji] = (distribuicao[reacao.emoji] || 0) + 1
+        somaValores += EMOJI_VALUES[reacao.emoji] || 0
+      }
+
+      const score = Math.round((somaValores / total) * 100) / 100
+      const label = score >= 1.0 ? 'positivo_forte' :
+                    score >= 0.3 ? 'positivo' :
+                    score >= -0.3 ? 'dividido' :
+                    score >= -1.0 ? 'negativo' : 'negativo_forte'
+
+      const distribuicaoDisplay: Record<string, number> = {}
+      for (const [key, count] of Object.entries(distribuicao)) {
+        distribuicaoDisplay[EMOJI_DISPLAY[key] || key] = count
+      }
+
+      return {
+        geral: { score, label, distribuicao, totalReacoes: total },
+        distribuicaoDisplay,
+      }
+    }
+
+    // PRD v3: Calcular divergencia
+    type DivergenciaTipo = 'sonhando' | 'resignados' | 'alinhados_positivo' | 'alinhados_negativo' | 'neutro'
+
+    const calcularDivergencia = (probabilidade: number, sentimentScore: number): {
+      tipo: DivergenciaTipo
+      mensagem: string
+      destaque: boolean
+    } => {
+      const sentimentoNorm = (sentimentScore + 2) * 25
+      const diff = sentimentoNorm - probabilidade
+      const absDiff = Math.abs(diff)
+      const destaque = absDiff >= 25
+
+      let tipo: DivergenciaTipo
+      let mensagem: string
+
+      if (absDiff < 15) {
+        if (probabilidade > 55 && sentimentoNorm > 55) {
+          tipo = 'alinhados_positivo'
+          mensagem = 'Tudo indica que vai rolar'
+        } else if (probabilidade < 45 && sentimentoNorm < 45) {
+          tipo = 'alinhados_negativo'
+          mensagem = 'Provavelmente nao vai rolar'
+        } else {
+          tipo = 'neutro'
+          mensagem = 'Cenario indefinido'
+        }
+      } else if (diff > 0) {
+        tipo = 'sonhando'
+        mensagem = `Torcida quer, mas midia diz ${probabilidade}%`
+      } else {
+        tipo = 'resignados'
+        mensagem = `${probabilidade}% de chance, mas torcida nao quer`
+      }
+
+      return { tipo, mensagem, destaque }
+    }
+
     // Serializar datas para o cliente
-    const serializedRumors = scoredRumors.map(r => ({
-      id: r.id,
-      playerName: r.playerName,
-      playerImage: r.playerImage,
-      fromTeam: r.fromTeam,
-      toTeam: r.toTeam,
-      title: r.title,
-      description: r.description,
-      category: r.category,
-      sentiment: r.sentiment,
-      status: r.status,
-      signalScore: r.signalScore,
-      isHot: r._isHot, // Flag para mostrar badge 🔥 ou ❄️
-      createdAt: r.createdAt.toISOString(),
-      updatedAt: r.updatedAt.toISOString(),
-      closesAt: r.closesAt.toISOString(),
-      resolvedAt: r.resolvedAt?.toISOString() || null,
-      lastScraped: r.lastScraped?.toISOString() || null,
-      signals: r.signals.map(s => ({
-        id: s.id,
-        signal: s.signal,
-        confidence: s.confidence,
-        createdAt: s.createdAt.toISOString(),
-        influencer: {
-          id: s.influencer.id,
-          name: s.influencer.name,
-          username: s.influencer.username,
-          outlet: s.influencer.outlet,
-          trustScore: s.influencer.trustScore,
-          createdAt: s.influencer.createdAt.toISOString(),
-          updatedAt: s.influencer.updatedAt.toISOString(),
-        },
-      })),
-      predictions: r.predictions.map(p => ({
-        id: p.id,
-        prediction: p.prediction,
-        userId: p.userId,
-        createdAt: p.createdAt.toISOString(),
-      })),
-    }))
+    const serializedRumors = scoredRumors.map(r => {
+      // PRD v3: Calcular sentimento e divergencia
+      const sentimento = calcularSentimento(r.reacoes || [])
+      const probabilidade = r.probabilidade ?? Math.round(r.sentiment * 100)
+      const divergencia = calcularDivergencia(probabilidade, sentimento.geral.score)
+
+      return {
+        id: r.id,
+        playerName: r.playerName,
+        playerImage: r.playerImage,
+        fromTeam: r.fromTeam,
+        toTeam: r.toTeam,
+        title: r.title,
+        description: r.description,
+        contexto: r.contexto,
+        category: r.category,
+        categoria: r.categoria,
+        // PRD v3: Dois eixos
+        probabilidade,
+        probTrend: r.probTrend,
+        sentiment: r.sentiment,
+        sentimento,
+        divergencia,
+        status: r.status,
+        signalScore: r.signalScore,
+        isHot: r._isHot,
+        totalReacoes: sentimento.geral.totalReacoes,
+        createdAt: r.createdAt.toISOString(),
+        updatedAt: r.updatedAt.toISOString(),
+        closesAt: r.closesAt.toISOString(),
+        resolvedAt: r.resolvedAt?.toISOString() || null,
+        lastScraped: r.lastScraped?.toISOString() || null,
+        // PRD v3: Fontes de jornalistas
+        fontes: (r.fontes || []).map(f => ({
+          id: f.id,
+          posicao: f.posicao,
+          intensidade: f.intensidade,
+          jornalista: {
+            nome: f.jornalista.nome,
+            handle: f.jornalista.handle,
+            credibilidade: f.jornalista.credibilidade,
+          },
+        })),
+        signals: r.signals.map(s => ({
+          id: s.id,
+          signal: s.signal,
+          confidence: s.confidence,
+          createdAt: s.createdAt.toISOString(),
+          influencer: {
+            id: s.influencer.id,
+            name: s.influencer.name,
+            username: s.influencer.username,
+            outlet: s.influencer.outlet,
+            trustScore: s.influencer.trustScore,
+            createdAt: s.influencer.createdAt.toISOString(),
+            updatedAt: s.influencer.updatedAt.toISOString(),
+          },
+        })),
+        predictions: r.predictions.map(p => ({
+          id: p.id,
+          prediction: p.prediction,
+          userId: p.userId,
+          createdAt: p.createdAt.toISOString(),
+        })),
+      }
+    })
 
     // Buscar top usuários
     const topUsers = await prisma.user.findMany({
@@ -287,6 +406,28 @@ export default async function FeedPage() {
         points: true,
       },
     })
+
+    // PRD v3: Buscar top jornalistas (fontes)
+    const jornalistas = await prisma.jornalista.findMany({
+      orderBy: { credibilidade: 'desc' },
+      take: 5,
+      include: {
+        _count: {
+          select: { fontes: true },
+        },
+      },
+    })
+
+    const topFontes = jornalistas.map((j, index) => ({
+      id: j.id,
+      rank: index + 1,
+      nome: j.nome,
+      handle: j.handle,
+      veiculo: j.veiculo,
+      credibilidade: Math.round(j.credibilidade),
+      totalPrevisoes: j._count.fontes,
+      taxaAcerto: `${Math.round(j.credibilidade)}%`,
+    }))
 
     const serializedUser = user ? {
       id: user.id,
@@ -304,6 +445,7 @@ export default async function FeedPage() {
         initialRumors={serializedRumors}
         user={serializedUser}
         topUsers={topUsers}
+        topFontes={topFontes}
       />
     )
   } catch (error) {
@@ -313,6 +455,7 @@ export default async function FeedPage() {
         initialRumors={[]}
         user={null}
         topUsers={[]}
+        topFontes={[]}
       />
     )
   }

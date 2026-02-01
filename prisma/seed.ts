@@ -852,61 +852,223 @@ async function main() {
 
   // =====================================
   // PRD v3: REAÇÕES (Sentimento da torcida)
-  // Novo sistema com 5 emojis por time
+  // AJUSTE-001: Variacao de distribuicoes, quantidades e timestamps
   // =====================================
-  const reacoesData: {
-    userId: string
-    rumorId: string
-    timeId: string
-    emoji: EmojiReacao
-  }[] = []
 
-  // Claudinho no Flamengo - torcida do Fla quer muito (🔥)
-  reacoesData.push(
-    { userId: users[0].id, rumorId: rumors[0].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
-    { userId: users[1].id, rumorId: rumors[0].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
-    { userId: users[2].id, rumorId: rumors[0].id, timeId: 'santos', emoji: EmojiReacao.NEUTRO },
-    { userId: users[3].id, rumorId: rumors[0].id, timeId: 'corinthians', emoji: EmojiReacao.NAO_GOSTO },
-    { userId: users[4].id, rumorId: rumors[0].id, timeId: 'palmeiras', emoji: EmojiReacao.PESSIMO },
-  )
+  // Helper para criar ID de usuario anonimo
+  const createAnonUserId = (i: number) => `anon_seed_${i}`
 
-  // Filipe Luís permanece - quase todos querem
-  reacoesData.push(
-    { userId: users[0].id, rumorId: rumors[2].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
-    { userId: users[1].id, rumorId: rumors[2].id, timeId: 'flamengo', emoji: EmojiReacao.AMOR },
-    { userId: users[3].id, rumorId: rumors[2].id, timeId: 'corinthians', emoji: EmojiReacao.NAO_GOSTO },
-  )
+  // Helper para criar reacoes em massa com distribuicao especifica
+  const createReacoesComDistribuicao = async (
+    rumorId: string,
+    timeId: string,
+    distribuicao: { FOGO: number; AMOR: number; NEUTRO: number; NAO_GOSTO: number; PESSIMO: number },
+    baseTimestamp: Date
+  ) => {
+    const reacoes: { userId: string; rumorId: string; timeId: string; emoji: EmojiReacao; criadoEm: Date }[] = []
+    let counter = 0
 
-  // Dudu pro Flamengo - torcida dividida, palmeirenses não querem de jeito nenhum
-  reacoesData.push(
-    { userId: users[0].id, rumorId: rumors[3].id, timeId: 'flamengo', emoji: EmojiReacao.AMOR },
-    { userId: users[1].id, rumorId: rumors[3].id, timeId: 'flamengo', emoji: EmojiReacao.NEUTRO },
-    { userId: users[4].id, rumorId: rumors[3].id, timeId: 'palmeiras', emoji: EmojiReacao.PESSIMO },
-    { userId: users[3].id, rumorId: rumors[3].id, timeId: 'corinthians', emoji: EmojiReacao.FOGO }, // Rival quer zoar
-  )
+    const emojis: EmojiReacao[] = [
+      ...Array(distribuicao.FOGO).fill(EmojiReacao.FOGO),
+      ...Array(distribuicao.AMOR).fill(EmojiReacao.AMOR),
+      ...Array(distribuicao.NEUTRO).fill(EmojiReacao.NEUTRO),
+      ...Array(distribuicao.NAO_GOSTO).fill(EmojiReacao.NAO_GOSTO),
+      ...Array(distribuicao.PESSIMO).fill(EmojiReacao.PESSIMO),
+    ]
 
-  // Neymar na Copa - Brasil quer
-  reacoesData.push(
-    { userId: users[0].id, rumorId: rumors[9].id, timeId: 'flamengo', emoji: EmojiReacao.AMOR },
-    { userId: users[2].id, rumorId: rumors[9].id, timeId: 'santos', emoji: EmojiReacao.FOGO },
-    { userId: users[3].id, rumorId: rumors[9].id, timeId: 'corinthians', emoji: EmojiReacao.AMOR },
-    { userId: users[4].id, rumorId: rumors[9].id, timeId: 'palmeiras', emoji: EmojiReacao.AMOR },
-  )
+    for (const emoji of emojis) {
+      // Variar timestamp entre 0 e 72 horas atras
+      const randomHours = Math.random() * 72
+      const criadoEm = new Date(baseTimestamp.getTime() - randomHours * 60 * 60 * 1000)
 
-  // Gerson volta - torcida do Fla sonha
-  reacoesData.push(
-    { userId: users[0].id, rumorId: rumors[4].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
-    { userId: users[1].id, rumorId: rumors[4].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO },
-  )
+      reacoes.push({
+        userId: createAnonUserId(counter++),
+        rumorId,
+        timeId,
+        emoji,
+        criadoEm,
+      })
+    }
 
-  // Memphis sai do Corinthians - torcida não quer
-  reacoesData.push(
-    { userId: users[3].id, rumorId: rumors[7].id, timeId: 'corinthians', emoji: EmojiReacao.PESSIMO },
-    { userId: users[0].id, rumorId: rumors[7].id, timeId: 'flamengo', emoji: EmojiReacao.FOGO }, // Rival quer
-  )
+    return reacoes
+  }
 
-  await prisma.reacao.createMany({ data: reacoesData })
-  console.log(`🎭 ${reacoesData.length} reações PRD v3 criadas`)
+  // Criar usuarios anonimos para as reacoes
+  const anonUsers: { id: string; name: string; username: string; team: string }[] = []
+  for (let i = 0; i < 500; i++) {
+    const teams = ['flamengo', 'palmeiras', 'corinthians', 'santos', 'botafogo', 'saopaulo', 'cruzeiro', 'gremio', 'internacional', 'atleticomg']
+    anonUsers.push({
+      id: createAnonUserId(i),
+      name: `Torcedor ${i}`,
+      username: `user_seed_${i}`,
+      team: teams[i % teams.length],
+    })
+  }
+
+  await prisma.user.createMany({
+    data: anonUsers,
+    skipDuplicates: true,
+  })
+  console.log(`👥 ${anonUsers.length} usuarios anonimos criados para reacoes`)
+
+  const allReacoes: { userId: string; rumorId: string; timeId: string; emoji: EmojiReacao; criadoEm: Date }[] = []
+  const agora = new Date()
+
+  // Rumor 0: Claudinho no Flamengo - 156 reacoes, torcida MUITO positiva (divergencia baixa com prob 58%)
+  // Fla: 40% FOGO, 35% AMOR, 10% NEUTRO, 10% NAO_GOSTO, 5% PESSIMO
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[0].id, 'flamengo',
+    { FOGO: 50, AMOR: 44, NEUTRO: 12, NAO_GOSTO: 12, PESSIMO: 6 },
+    agora
+  ))
+  // Outros times: menos entusiasmados
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[0].id, 'corinthians',
+    { FOGO: 2, AMOR: 3, NEUTRO: 8, NAO_GOSTO: 10, PESSIMO: 9 },
+    agora
+  ))
+
+  // Rumor 2: Filipe Luis permanece - 89 reacoes, MUITO positivo
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[2].id, 'flamengo',
+    { FOGO: 35, AMOR: 30, NEUTRO: 10, NAO_GOSTO: 5, PESSIMO: 2 },
+    new Date(agora.getTime() - 12 * 60 * 60 * 1000) // 12h atras
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[2].id, 'corinthians',
+    { FOGO: 0, AMOR: 1, NEUTRO: 2, NAO_GOSTO: 2, PESSIMO: 2 },
+    new Date(agora.getTime() - 12 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 3: Dudu pro Fla - 78 reacoes, DIVERGENCIA ALTA! Prob baixa (15%) mas torcida quer
+  // Este eh o rumor com divergencia que o PRD pede
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[3].id, 'flamengo',
+    { FOGO: 25, AMOR: 20, NEUTRO: 5, NAO_GOSTO: 3, PESSIMO: 2 }, // Fla quer muito
+    new Date(agora.getTime() - 36 * 60 * 60 * 1000) // 1.5 dias atras
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[3].id, 'palmeiras',
+    { FOGO: 0, AMOR: 0, NEUTRO: 2, NAO_GOSTO: 8, PESSIMO: 13 }, // Palmeiras odeia
+    new Date(agora.getTime() - 36 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 4: Gerson volta - 45 reacoes, torcida SONHA mas prob baixa (28%)
+  // Outro caso de divergencia: torcida quer mas midia diz que nao vai
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[4].id, 'flamengo',
+    { FOGO: 20, AMOR: 12, NEUTRO: 5, NAO_GOSTO: 5, PESSIMO: 3 },
+    new Date(agora.getTime() - 48 * 60 * 60 * 1000) // 2 dias atras
+  ))
+
+  // Rumor 7: Memphis sai - 67 reacoes, torcida NEGATIVA mas prob media (42%)
+  // Caso de "resignados" - vai acontecer mas nao querem
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[7].id, 'corinthians',
+    { FOGO: 3, AMOR: 5, NEUTRO: 8, NAO_GOSTO: 22, PESSIMO: 20 },
+    new Date(agora.getTime() - 24 * 60 * 60 * 1000)
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[7].id, 'flamengo',
+    { FOGO: 5, AMOR: 2, NEUTRO: 1, NAO_GOSTO: 0, PESSIMO: 1 }, // Rivais ironicos
+    new Date(agora.getTime() - 24 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 9: Neymar Copa - 198 reacoes (MUITO engajamento), Brasil todo quer
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[9].id, 'santos',
+    { FOGO: 40, AMOR: 25, NEUTRO: 5, NAO_GOSTO: 3, PESSIMO: 2 },
+    new Date(agora.getTime() - 6 * 60 * 60 * 1000)
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[9].id, 'flamengo',
+    { FOGO: 30, AMOR: 20, NEUTRO: 8, NAO_GOSTO: 5, PESSIMO: 2 },
+    new Date(agora.getTime() - 6 * 60 * 60 * 1000)
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[9].id, 'corinthians',
+    { FOGO: 18, AMOR: 15, NEUTRO: 5, NAO_GOSTO: 3, PESSIMO: 2 },
+    new Date(agora.getTime() - 6 * 60 * 60 * 1000)
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[9].id, 'palmeiras',
+    { FOGO: 8, AMOR: 5, NEUTRO: 2, NAO_GOSTO: 0, PESSIMO: 0 },
+    new Date(agora.getTime() - 6 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 1: Supercopa - 112 reacoes, dividido entre torcidas
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[1].id, 'flamengo',
+    { FOGO: 25, AMOR: 18, NEUTRO: 8, NAO_GOSTO: 3, PESSIMO: 2 },
+    new Date(agora.getTime() - 3 * 60 * 60 * 1000)
+  ))
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[1].id, 'botafogo',
+    { FOGO: 22, AMOR: 15, NEUTRO: 6, NAO_GOSTO: 5, PESSIMO: 8 }, // Botafogo tb quer
+    new Date(agora.getTime() - 3 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 5: Vitor Roque - 34 reacoes, pouco engajamento
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[5].id, 'palmeiras',
+    { FOGO: 10, AMOR: 8, NEUTRO: 6, NAO_GOSTO: 5, PESSIMO: 5 },
+    new Date(agora.getTime() - 60 * 60 * 60 * 1000) // 2.5 dias
+  ))
+
+  // Rumor 6: Palmeiras tri - 52 reacoes
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[6].id, 'palmeiras',
+    { FOGO: 20, AMOR: 12, NEUTRO: 5, NAO_GOSTO: 8, PESSIMO: 7 },
+    new Date(agora.getTime() - 72 * 60 * 60 * 1000) // 3 dias
+  ))
+
+  // Rumor 8: Breno Bidon - 28 reacoes
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[8].id, 'corinthians',
+    { FOGO: 12, AMOR: 8, NEUTRO: 4, NAO_GOSTO: 2, PESSIMO: 2 },
+    new Date(agora.getTime() - 48 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 10: Gabigol Santos - 18 reacoes, pouco interesse
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[10].id, 'santos',
+    { FOGO: 5, AMOR: 4, NEUTRO: 3, NAO_GOSTO: 3, PESSIMO: 3 },
+    new Date(agora.getTime() - 60 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 11: Arthur Cabral - 42 reacoes
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[11].id, 'botafogo',
+    { FOGO: 15, AMOR: 12, NEUTRO: 8, NAO_GOSTO: 4, PESSIMO: 3 },
+    new Date(agora.getTime() - 18 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 12: Lucas aposentadoria - 56 reacoes, torcida dividida
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[12].id, 'saopaulo',
+    { FOGO: 8, AMOR: 10, NEUTRO: 12, NAO_GOSTO: 14, PESSIMO: 12 }, // Dividido, muitos nao querem
+    new Date(agora.getTime() - 40 * 60 * 60 * 1000)
+  ))
+
+  // Rumor 13: Gabigol Cruzeiro - 38 reacoes, maioria negativa
+  allReacoes.push(...await createReacoesComDistribuicao(
+    rumors[13].id, 'cruzeiro',
+    { FOGO: 4, AMOR: 5, NEUTRO: 6, NAO_GOSTO: 12, PESSIMO: 11 },
+    new Date(agora.getTime() - 30 * 60 * 60 * 1000)
+  ))
+
+  // Inserir todas as reacoes
+  await prisma.reacao.createMany({
+    data: allReacoes.map(r => ({
+      userId: r.userId,
+      rumorId: r.rumorId,
+      timeId: r.timeId,
+      emoji: r.emoji,
+      criadoEm: r.criadoEm,
+    })),
+    skipDuplicates: true,
+  })
+  console.log(`🎭 ${allReacoes.length} reacoes PRD v3 criadas com variacao`)
 
   console.log('\n✅ Seed completo!')
   console.log(`   - ${users.length} usuários`)
