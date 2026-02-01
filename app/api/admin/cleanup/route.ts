@@ -26,6 +26,11 @@ export async function POST(request: Request) {
           { title: { contains: '2025' } },
           // Gabigol já foi pro Cruzeiro (dado antigo)
           { AND: [{ playerName: { contains: 'Gabigol' } }, { toTeam: { contains: 'Cruzeiro' } }] },
+          // FALSO: Gabigol já está no Flamengo (voltou em Jan/2026)
+          { AND: [{ playerName: { contains: 'Gabigol' } }, { toTeam: { contains: 'Flamengo' } }] },
+          // FALSO: Lucas Paquetá NÃO está indo pro Corinthians
+          { AND: [{ playerName: { contains: 'Paqueta' } }, { toTeam: { contains: 'Corinthians' } }] },
+          { AND: [{ playerName: { contains: 'Paquetá' } }, { toTeam: { contains: 'Corinthians' } }] },
           // Nomes com underscore (bug antigo)
           { playerName: { contains: '_' } },
           // Jogadores indo para time que já estão (dados do Transfermarkt 2026)
