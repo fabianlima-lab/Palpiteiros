@@ -3,6 +3,13 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { ReactionPicker, ReactionEmoji, REACTIONS } from './ReactionPicker'
+import {
+  getSignalFromPercent,
+  getSignalFromScore,
+  getCredibilityBadge,
+  getTrendSignal,
+  type TrendDirection,
+} from '@/lib/signals'
 
 interface Signal {
   id: string
@@ -312,172 +319,173 @@ export function RumorCard({
         gap: '12px',
         padding: '0 16px 12px',
       }}>
-        {/* BLOCO 1: Probabilidade (das fontes) */}
-        <div style={{
-          backgroundColor: '#09090B',
-          borderRadius: '8px',
-          padding: '12px',
-          border: '1px solid #27272A',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginBottom: '8px',
-          }}>
-            <span style={{ fontSize: '12px' }}>📰</span>
-            <span style={{
-              fontSize: '11px',
-              color: '#71717A',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              fontWeight: '600',
-            }}>
-              Probabilidade
-            </span>
-          </div>
+        {/* BLOCO 1: Probabilidade (das fontes) - SINAIS VISUAIS */}
+        {(() => {
+          const probSignal = getSignalFromPercent(probDisplay)
+          const trendSignal = reactionFeedback?.probability
+            ? getTrendSignal(reactionFeedback.probability)
+            : null
 
-          {/* Numero grande */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'baseline',
-            gap: '4px',
-            marginBottom: '8px',
-          }}>
-            <span style={{
-              fontSize: '28px',
-              fontWeight: '700',
-              color: getProbabilidadeColor(probDisplay),
-              fontFamily: 'JetBrains Mono, monospace',
-              lineHeight: 1,
-            }}>
-              {probDisplay}%
-            </span>
-            {/* Trend normal ou feedback da reação */}
-            {reactionFeedback?.probability ? (
-              <span style={{
-                fontSize: '14px',
-                color: reactionFeedback.probability === 'up' ? '#10B981' : '#EF4444',
-                fontWeight: '600',
-                animation: 'fadeInOut 2.5s ease',
-              }}>
-                {reactionFeedback.probability === 'up' ? '+0.1% ↑' : '-0.1% ↓'}
-              </span>
-            ) : probTrend && probTrend !== 'estavel' && (
-              <span style={{
-                fontSize: '16px',
-                color: probTrend === 'subindo' ? '#10B981' : '#EF4444',
-                fontWeight: '600',
-              }}>
-                {getTrendIcon(probTrend)}
-              </span>
-            )}
-          </div>
-
-          {/* Barra de probabilidade */}
-          <div style={{
-            height: '6px',
-            backgroundColor: '#27272A',
-            borderRadius: '3px',
-            overflow: 'hidden',
-          }}>
+          return (
             <div style={{
-              height: '100%',
-              width: `${probDisplay}%`,
-              backgroundColor: getProbabilidadeColor(probDisplay),
-              borderRadius: '3px',
-              transition: 'width 0.3s ease',
-            }} />
-          </div>
-        </div>
-
-        {/* BLOCO 2: Sentimento (da torcida) */}
-        <div style={{
-          backgroundColor: '#09090B',
-          borderRadius: '8px',
-          padding: '12px',
-          border: '1px solid #27272A',
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            marginBottom: '8px',
-          }}>
-            <span style={{ fontSize: '12px' }}>👥</span>
-            <span style={{
-              fontSize: '11px',
-              color: '#71717A',
-              textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              fontWeight: '600',
+              backgroundColor: '#09090B',
+              borderRadius: '8px',
+              padding: '12px',
+              border: '1px solid #27272A',
             }}>
-              Sentimento
-            </span>
-          </div>
-
-          {/* Percentual de sentimento positivo (🔥 + 😍) */}
-          {(() => {
-            const positivo = (reactionCounts['🔥'] || 0) + (reactionCounts['😍'] || 0)
-            const sentimentPercent = totalReactions > 0 ? Math.round((positivo / totalReactions) * 100) : 50
-            const getSentimentoColor = (pct: number) => {
-              if (pct >= 60) return '#10B981' // Verde
-              if (pct >= 40) return '#F59E0B' // Amarelo
-              return '#EF4444' // Vermelho
-            }
-            return (
-              <>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '4px',
-                  marginBottom: '8px',
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '8px',
+              }}>
+                <span style={{ fontSize: '12px' }}>📰</span>
+                <span style={{
+                  fontSize: '11px',
+                  color: '#71717A',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  fontWeight: '600',
                 }}>
+                  Probabilidade
+                </span>
+              </div>
+
+              {/* Sinal visual grande (emoji + seta) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '8px',
+              }}>
+                <span style={{
+                  fontSize: '32px',
+                  lineHeight: 1,
+                }}>
+                  {probSignal.emoji}
+                </span>
+                <span style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: probSignal.color,
+                }}>
+                  {probSignal.arrow}
+                </span>
+                {/* Feedback da reação - só seta, sem percentual */}
+                {trendSignal && (
                   <span style={{
-                    fontSize: '28px',
-                    fontWeight: '700',
-                    color: getSentimentoColor(sentimentPercent),
-                    fontFamily: 'JetBrains Mono, monospace',
-                    lineHeight: 1,
+                    fontSize: '18px',
+                    color: trendSignal.color,
+                    fontWeight: '600',
+                    animation: 'fadeInOut 2.5s ease',
+                    marginLeft: '4px',
                   }}>
-                    {sentimentPercent}%
+                    {trendSignal.arrow}
                   </span>
-                  {/* Feedback da reação ou label padrão */}
-                  {reactionFeedback?.sentiment ? (
-                    <span style={{
-                      fontSize: '12px',
-                      color: reactionFeedback.sentiment === 'up' ? '#10B981' :
-                             reactionFeedback.sentiment === 'down' ? '#EF4444' : '#71717A',
-                      fontWeight: '500',
-                      animation: 'fadeInOut 2.5s ease',
-                    }}>
-                      {reactionFeedback.sentiment === 'up' ? '+1% ↑' :
-                       reactionFeedback.sentiment === 'down' ? '-1% ↓' : '±0%'}
-                    </span>
-                  ) : (
-                    <span style={{ fontSize: '12px', color: '#71717A' }}>positivo</span>
-                  )}
-                </div>
+                )}
+                {/* Trend normal (sem feedback) */}
+                {!trendSignal && probTrend && probTrend !== 'estavel' && (
+                  <span style={{
+                    fontSize: '16px',
+                    color: probTrend === 'subindo' ? '#10B981' : '#EF4444',
+                    fontWeight: '600',
+                  }}>
+                    {probTrend === 'subindo' ? '↑' : '↓'}
+                  </span>
+                )}
+              </div>
 
-                {/* Barra de sentimento (igual à de probabilidade) */}
-                <div style={{
-                  height: '6px',
-                  backgroundColor: '#27272A',
-                  borderRadius: '3px',
-                  overflow: 'hidden',
+              {/* Label do sinal */}
+              <div style={{
+                fontSize: '12px',
+                color: probSignal.color,
+                fontWeight: '500',
+              }}>
+                {probSignal.label}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* BLOCO 2: Sentimento (da torcida) - SINAIS VISUAIS */}
+        {(() => {
+          const positivo = (reactionCounts['🔥'] || 0) + (reactionCounts['😍'] || 0)
+          const sentimentPercent = totalReactions > 0 ? Math.round((positivo / totalReactions) * 100) : 50
+          const sentimentSignal = getSignalFromPercent(sentimentPercent)
+          const trendSignal = reactionFeedback?.sentiment
+            ? getTrendSignal(reactionFeedback.sentiment as TrendDirection)
+            : null
+
+          return (
+            <div style={{
+              backgroundColor: '#09090B',
+              borderRadius: '8px',
+              padding: '12px',
+              border: '1px solid #27272A',
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                marginBottom: '8px',
+              }}>
+                <span style={{ fontSize: '12px' }}>👥</span>
+                <span style={{
+                  fontSize: '11px',
+                  color: '#71717A',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  fontWeight: '600',
                 }}>
-                  <div style={{
-                    height: '100%',
-                    width: `${sentimentPercent}%`,
-                    backgroundColor: getSentimentoColor(sentimentPercent),
-                    borderRadius: '3px',
-                    transition: 'width 0.3s ease',
-                  }} />
-                </div>
-              </>
-            )
-          })()}
-        </div>
+                  Sentimento
+                </span>
+              </div>
+
+              {/* Sinal visual grande (emoji + seta) */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                marginBottom: '8px',
+              }}>
+                <span style={{
+                  fontSize: '32px',
+                  lineHeight: 1,
+                }}>
+                  {sentimentSignal.emoji}
+                </span>
+                <span style={{
+                  fontSize: '24px',
+                  fontWeight: '700',
+                  color: sentimentSignal.color,
+                }}>
+                  {sentimentSignal.arrow}
+                </span>
+                {/* Feedback da reação - só seta, sem percentual */}
+                {trendSignal && (
+                  <span style={{
+                    fontSize: '18px',
+                    color: trendSignal.color,
+                    fontWeight: '600',
+                    animation: 'fadeInOut 2.5s ease',
+                    marginLeft: '4px',
+                  }}>
+                    {trendSignal.arrow}
+                  </span>
+                )}
+              </div>
+
+              {/* Label do sinal */}
+              <div style={{
+                fontSize: '12px',
+                color: sentimentSignal.color,
+                fontWeight: '500',
+              }}>
+                {sentimentSignal.label}
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* PRD v3: Badge de Divergencia (quando ha destaque) */}
@@ -561,45 +569,47 @@ export function RumorCard({
         borderTop: '1px solid #27272A',
         backgroundColor: '#0F0F12',
       }}>
-        {/* Fontes de jornalistas */}
+        {/* Fontes de jornalistas - COM BADGES */}
         {fontes && fontes.length > 0 ? (
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             flex: 1,
             minWidth: 0,
             overflow: 'hidden',
           }}>
-            {fontes.slice(0, 3).map((fonte, i) => (
-              <span
-                key={fonte.id}
-                style={{
-                  fontSize: '11px',
-                  color: '#A1A1AA',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '3px',
-                }}
-              >
-                <span style={{
-                  color: fonte.posicao === 'confirma' ? '#10B981' : fonte.posicao === 'nega' ? '#EF4444' : '#71717A',
-                }}>
-                  {fonte.posicao === 'confirma' ? '✓' : fonte.posicao === 'nega' ? '✗' : '○'}
+            {fontes.slice(0, 3).map((fonte, i) => {
+              const badge = getCredibilityBadge(fonte.jornalista.credibilidade)
+              return (
+                <span
+                  key={fonte.id}
+                  style={{
+                    fontSize: '11px',
+                    color: '#A1A1AA',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                >
+                  <span style={{
+                    color: fonte.posicao === 'confirma' ? '#10B981' : fonte.posicao === 'nega' ? '#EF4444' : '#71717A',
+                  }}>
+                    {fonte.posicao === 'confirma' ? '✓' : fonte.posicao === 'nega' ? '✗' : '○'}
+                  </span>
+                  <span style={{ whiteSpace: 'nowrap' }}>
+                    {fonte.jornalista.nome.split(' ')[0]}
+                  </span>
+                  {/* Badge de credibilidade ao invés de % */}
+                  {badge.emoji && (
+                    <span style={{ fontSize: '10px' }} title={badge.label}>
+                      {badge.emoji}
+                    </span>
+                  )}
+                  {i < Math.min(fontes.length - 1, 2) && <span style={{ color: '#3F3F46' }}>·</span>}
                 </span>
-                <span style={{ whiteSpace: 'nowrap' }}>
-                  {fonte.jornalista.nome.split(' ')[0]}
-                </span>
-                <span style={{
-                  color: '#71717A',
-                  fontFamily: 'JetBrains Mono, monospace',
-                  fontSize: '10px',
-                }}>
-                  {Math.round(fonte.jornalista.credibilidade)}%
-                </span>
-                {i < Math.min(fontes.length - 1, 2) && <span style={{ color: '#3F3F46' }}>·</span>}
-              </span>
-            ))}
+              )
+            })}
             {fontes.length > 3 && (
               <span style={{ fontSize: '11px', color: '#71717A' }}>
                 +{fontes.length - 3}

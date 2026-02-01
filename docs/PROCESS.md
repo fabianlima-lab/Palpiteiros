@@ -91,6 +91,7 @@ palpiteiro-mvp/
 │   └── time/[teamId]/        # Feed filtrado por time
 ├── lib/                      # Utils client-side
 │   ├── relevance.ts          # Algoritmo de ordenacao
+│   ├── signals.ts            # **NOVO** Sistema de sinais visuais e badges
 │   └── teams.ts              # Lista de times brasileiros
 ├── prisma/
 │   ├── schema.prisma         # Schema do banco
@@ -116,6 +117,7 @@ palpiteiro-mvp/
 |---------|--------|--------------|
 | `app/components/RumorCard.tsx` | Card principal de rumor | UI de rumores |
 | `app/feed/FeedClient.tsx` | Feed principal | Logica do feed |
+| `lib/signals.ts` | **Sistema de sinais visuais e badges** | Mudar exibicao de prob/sentimento |
 | `lib/relevance.ts` | Algoritmo de ordenacao | Mudar ordem dos rumores |
 | `src/lib/scrapers/rumor-detector.ts` | Detecta rumores | Scraping |
 | `prisma/schema.prisma` | Schema do banco | Mudancas no DB |
@@ -201,6 +203,9 @@ git push origin main                           # Deploy automatico
 - [x] Cron job no Vercel (diario as 8h)
 - [x] Logo novo (balao de chat roxo)
 - [x] RumorCard redesenhado (PRD v3)
+- [x] **NOVO:** Sinais visuais ao inves de percentuais (probabilidade/sentimento)
+- [x] **NOVO:** Badges de credibilidade para fontes (💎🥇🥈🥉)
+- [x] **NOVO:** Feedback de reacao mostra apenas seta (sem %)
 
 ### Problemas Conhecidos
 1. **Cron do Vercel:** Plano Hobby so permite cron diario
@@ -212,9 +217,10 @@ git push origin main                           # Deploy automatico
 ## Backlog de Features
 
 ### Alta Prioridade
-- [ ] **Remover percentuais de probabilidade** - Mostrar apenas sinais visuais
-- [ ] **Ajustar secao de influenciadores** - Sem percentuais, com conteudo clicavel
+- [x] ~~**Remover percentuais de probabilidade** - Mostrar apenas sinais visuais~~ **FEITO 2026-01-31**
+- [x] ~~**Ajustar secao de influenciadores** - Sem percentuais, com badges~~ **FEITO 2026-01-31**
 - [ ] **Adicionar fontes tradicionais** - Globo, portais, veiculos especializados
+- [ ] **Permitir clique no influenciador** - Ver conteudo original que impactou o algoritmo
 
 ### Media Prioridade
 - [ ] Autenticacao de usuarios (NextAuth ou Clerk)
@@ -246,8 +252,14 @@ O algoritmo interno calcula probabilidades, mas o usuario ve apenas:
 
 **Motivo:** Algoritmo proprietario. Usuario nao precisa ver os calculos.
 
-### Secao de Influenciadores
+### Secao de Influenciadores/Fontes
 - Mostrar influenciadores SEM percentuais de influencia
+- **Usar badges de credibilidade baseados em distribuicao normal:**
+  - 💎 Diamante: Top 5% (credibilidade >= 95)
+  - 🥇 Ouro: Top 20% (credibilidade >= 80)
+  - 🥈 Prata: Top 50% (credibilidade >= 60)
+  - 🥉 Bronze: Top 80% (credibilidade >= 40)
+  - Sem badge: Bottom 20% (credibilidade < 40)
 - Permitir clique para ver o conteudo original
 - Deixar claro que eh fonte qualitativa, nao peso matematico
 
@@ -266,13 +278,19 @@ O sistema deve agregar:
 
 ## Historico de Mudancas
 
-### 2026-01-31 (Sessao Atual)
-- [ ] **PENDENTE:** Implementar mudancas de exibicao de probabilidade
-- [ ] **PENDENTE:** Remover percentuais da UI
-- [ ] **PENDENTE:** Adicionar sistema de sinais visuais
+### 2026-01-31 (Sessao Atual - Sinais Visuais)
+- [x] Criado `lib/signals.ts` - Sistema centralizado de sinais visuais
+- [x] Implementado `getSignalFromPercent()` - Converte % em emoji+seta
+- [x] Implementado `getCredibilityBadge()` - Sistema de badges (💎🥇🥈🥉)
+- [x] Atualizado `RumorCard.tsx` - Probabilidade e sentimento agora mostram sinais visuais
+- [x] Atualizado `RumorCard.tsx` - Fontes agora mostram badges ao inves de %
+- [x] Atualizado `RumorCard.tsx` - Feedback de reacao mostra apenas seta (sem %)
+- [x] Atualizado `FeedClient.tsx` - Sidebar "Trending" usa sinais visuais
+- [x] Atualizado `FeedClient.tsx` - Sidebar "Top Fontes" usa badges
+- [x] Criado tag `v1.0.0-pre-signals` para rollback seguro
 - [x] Criado documento PROCESS.md
 
-### 2026-01-31 (Sessao Anterior)
+### 2026-01-31 (Sessao Anterior - PRD v3)
 - Logo novo implementado (balao de chat roxo)
 - Vercel reconectado ao GitHub
 - Banco de producao limpo
