@@ -34,8 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const description = rumor.description || `${rumor.playerName} pode ir para ${rumor.toTeam}. Veja o que as fontes dizem!`
   const url = `https://palpiteiro-mvp.vercel.app/rumor/${id}`
 
-  // Imagem OG estatica padrao
-  const ogImageUrl = 'https://palpiteiro-mvp.vercel.app/og-image.png'
+  // Imagem OG dinamica por rumor
+  const ogImageUrl = `https://palpiteiro-mvp.vercel.app/api/og?id=${id}`
 
   return {
     title,
