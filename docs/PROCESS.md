@@ -209,6 +209,7 @@ git push origin main                           # Deploy automatico
 - [x] **NOVO:** Badges de credibilidade para fontes (💎🥇🥈🥉)
 - [x] **NOVO:** Feedback de reacao mostra apenas seta (sem %)
 - [x] **NOVO:** Hamburger menu para versao mobile (MobileMenu.tsx)
+- [x] **NOVO:** Compartilhar no Instagram com imagem do card (html2canvas)
 
 ### Problemas Conhecidos
 1. **Cron do Vercel:** Plano Hobby so permite cron diario
@@ -281,7 +282,7 @@ O sistema deve agregar:
 
 ## Historico de Mudancas
 
-### 2026-02-01 (Sessao Atual - Mobile Menu)
+### 2026-02-01 (Sessao Atual - Mobile Menu + Instagram)
 - [x] Criado `app/components/MobileMenu.tsx` - Hamburger menu para mobile
 - [x] Menu lateral (drawer) com 3 tabs: Menu, Trending, Fontes
 - [x] Botao hamburger aparece apenas em telas < 768px
@@ -289,6 +290,10 @@ O sistema deve agregar:
 - [x] Atualizado `FeedClient.tsx` - Integrado MobileMenu no header
 - [x] Corrigido feedback de reacao - mostra apenas seta (sem %)
 - [x] Revertido sinais visuais - usuario preferiu manter % com seta
+- [x] Adicionado botao de compartilhar no Instagram (📸)
+- [x] Instalado `html2canvas` para gerar imagem do card
+- [x] Implementado gerador de imagem do card completo
+- [x] Web Share API para compartilhar em mobile, fallback para download
 
 ### 2026-01-31 (Sessao Anterior - Sinais Visuais)
 - [x] Criado `lib/signals.ts` - Sistema centralizado de sinais visuais

@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { ReactionPicker, ReactionEmoji, REACTIONS } from './ReactionPicker'
+import html2canvas from 'html2canvas'
 
 interface Signal {
   id: string
@@ -137,6 +138,77 @@ export function RumorCard({
     sentiment: 'up' | 'down' | 'neutral' | null
     probability: 'up' | 'down' | null
   } | null>(null)
+  const [isGeneratingImage, setIsGeneratingImage] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  // Funcao para compartilhar no Instagram (gera imagem do card)
+  const handleShareInstagram = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    if (!cardRef.current || isGeneratingImage) return
+
+    setIsGeneratingImage(true)
+
+    try {
+      // Gerar imagem do card
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: '#09090B',
+        scale: 2, // Alta resolucao
+        useCORS: true,
+        logging: false,
+      })
+
+      // Converter para blob
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          setIsGeneratingImage(false)
+          return
+        }
+
+        // Tentar usar Web Share API (funciona melhor em mobile)
+        if (navigator.share && navigator.canShare) {
+          const file = new File([blob], `palpiteiros-rumor-${id}.png`, { type: 'image/png' })
+          const shareData = {
+            files: [file],
+            title: title,
+            text: `${title} - Veja no Palpiteiros!`,
+          }
+
+          if (navigator.canShare(shareData)) {
+            try {
+              await navigator.share(shareData)
+              setIsGeneratingImage(false)
+              return
+            } catch (err) {
+              // Usuario cancelou ou erro - continua para fallback
+            }
+          }
+        }
+
+        // Fallback: Download da imagem
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `palpiteiros-rumor-${id}.png`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+
+        // Abrir Instagram (usuario pode postar manualmente)
+        // No mobile, isso abre o app do Instagram
+        setTimeout(() => {
+          window.open('https://instagram.com', '_blank')
+        }, 500)
+
+        setIsGeneratingImage(false)
+      }, 'image/png')
+    } catch (error) {
+      console.error('Erro ao gerar imagem:', error)
+      setIsGeneratingImage(false)
+    }
+  }
 
   // Usar categoria PRD v3 se disponivel
   const categoryKey = categoria || category
@@ -221,13 +293,16 @@ export function RumorCard({
   const qtdFontes = fontes?.length ?? 0
 
   return (
-    <div style={{
-      backgroundColor: '#18181B',
-      border: divergencia?.destaque ? '1px solid #F9731650' : '1px solid #27272A',
-      borderRadius: '12px',
-      overflow: 'hidden',
-      transition: 'all 0.2s ease',
-    }}>
+    <div
+      ref={cardRef}
+      style={{
+        backgroundColor: '#18181B',
+        border: divergencia?.destaque ? '1px solid #F9731650' : '1px solid #27272A',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        transition: 'all 0.2s ease',
+      }}
+    >
       {/* Header - Clickable */}
       <Link
         href={`/rumor/${id}`}
@@ -676,6 +751,30 @@ export function RumorCard({
           >
             𝕏
           </a>
+
+          {/* Botao Instagram - Gera imagem do card */}
+          <button
+            onClick={handleShareInstagram}
+            disabled={isGeneratingImage}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: '6px',
+              backgroundColor: '#E1306C20',
+              color: '#E1306C',
+              fontSize: '14px',
+              border: 'none',
+              cursor: isGeneratingImage ? 'wait' : 'pointer',
+              opacity: isGeneratingImage ? 0.6 : 1,
+              transition: 'all 0.15s ease',
+            }}
+            title="Compartilhar no Instagram (gera imagem)"
+          >
+            {isGeneratingImage ? '⏳' : '📸'}
+          </button>
 
           {/* Botao Copiar Link */}
           <button
