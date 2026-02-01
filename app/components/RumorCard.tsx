@@ -350,7 +350,6 @@ export function RumorCard({
             backgroundColor: '#27272A',
             borderRadius: '3px',
             overflow: 'hidden',
-            marginBottom: '6px',
           }}>
             <div style={{
               height: '100%',
@@ -359,18 +358,6 @@ export function RumorCard({
               borderRadius: '3px',
               transition: 'width 0.3s ease',
             }} />
-          </div>
-
-          {/* Info das fontes */}
-          <div style={{
-            fontSize: '11px',
-            color: '#71717A',
-          }}>
-            {qtdFontes > 0 ? (
-              <span>{qtdFontes} fonte{qtdFontes > 1 ? 's' : ''}</span>
-            ) : (
-              <span>Aguardando fontes</span>
-            )}
           </div>
         </div>
 
@@ -399,65 +386,53 @@ export function RumorCard({
             </span>
           </div>
 
-          {/* Distribuicao de emojis em linha */}
-          <div style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            gap: '4px',
-            marginBottom: '8px',
-            minHeight: '24px',
-          }}>
-            {percentages.length > 0 ? (
-              percentages.map(p => (
-                <span key={p.emoji} style={{
-                  fontSize: '12px',
-                  color: EMOJI_COLORS[p.emoji],
-                  fontWeight: '600',
-                  fontFamily: 'JetBrains Mono, monospace',
+          {/* Percentual de sentimento positivo (🔥 + 😍) */}
+          {(() => {
+            const positivo = (reactionCounts['🔥'] || 0) + (reactionCounts['😍'] || 0)
+            const sentimentPercent = totalReactions > 0 ? Math.round((positivo / totalReactions) * 100) : 50
+            const getSentimentoColor = (pct: number) => {
+              if (pct >= 60) return '#10B981' // Verde
+              if (pct >= 40) return '#F59E0B' // Amarelo
+              return '#EF4444' // Vermelho
+            }
+            return (
+              <>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '4px',
+                  marginBottom: '8px',
                 }}>
-                  {p.emoji}{p.percent}%
-                </span>
-              ))
-            ) : (
-              <span style={{ fontSize: '12px', color: '#71717A' }}>
-                Sem reacoes
-              </span>
-            )}
-          </div>
+                  <span style={{
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    color: getSentimentoColor(sentimentPercent),
+                    fontFamily: 'JetBrains Mono, monospace',
+                    lineHeight: 1,
+                  }}>
+                    {sentimentPercent}%
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#71717A' }}>positivo</span>
+                </div>
 
-          {/* Barra de sentimento segmentada */}
-          <div style={{
-            height: '6px',
-            backgroundColor: '#27272A',
-            borderRadius: '3px',
-            overflow: 'hidden',
-            display: 'flex',
-            marginBottom: '6px',
-          }}>
-            {percentages.map((p, i) => (
-              <div
-                key={p.emoji}
-                style={{
-                  height: '100%',
-                  width: `${p.percent}%`,
-                  backgroundColor: EMOJI_COLORS[p.emoji],
-                  borderRadius: i === 0 ? '3px 0 0 3px' : i === percentages.length - 1 ? '0 3px 3px 0' : '0',
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Total de reacoes */}
-          <div style={{
-            fontSize: '11px',
-            color: '#71717A',
-          }}>
-            {totalReactions > 0 ? (
-              <span>{totalReactions} reacao{totalReactions > 1 ? 'es' : ''}</span>
-            ) : (
-              <span>Seja o primeiro!</span>
-            )}
-          </div>
+                {/* Barra de sentimento (igual à de probabilidade) */}
+                <div style={{
+                  height: '6px',
+                  backgroundColor: '#27272A',
+                  borderRadius: '3px',
+                  overflow: 'hidden',
+                }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${sentimentPercent}%`,
+                    backgroundColor: getSentimentoColor(sentimentPercent),
+                    borderRadius: '3px',
+                    transition: 'width 0.3s ease',
+                  }} />
+                </div>
+              </>
+            )
+          })()}
         </div>
       </div>
 
