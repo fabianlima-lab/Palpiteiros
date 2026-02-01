@@ -215,6 +215,7 @@ git push origin main                           # Deploy automatico
 1. **Cron do Vercel:** Plano Hobby so permite cron diario
 2. **Rate Limit Twitter:** 50 requests/15min (Basic tier)
 3. **Logos dos Times:** CDN do Transfermarkt pode dar 403
+4. **Dominio:** O dominio `palpiteiros.com` EXPIROU. Usar sempre `palpiteiro-mvp.vercel.app`
 
 ---
 
@@ -294,6 +295,8 @@ O sistema deve agregar:
 - [x] Instalado `html2canvas` para gerar imagem do card
 - [x] Implementado gerador de imagem do card completo
 - [x] Web Share API para compartilhar em mobile, fallback para download
+- [x] Corrigido dominio nos links de compartilhamento (palpiteiros.com → palpiteiro-mvp.vercel.app)
+- [x] Adicionada regra no PROCESS.md: SEMPRE testar antes de deploy
 
 ### 2026-01-31 (Sessao Anterior - Sinais Visuais)
 - [x] Criado `lib/signals.ts` - Sistema centralizado de sinais visuais
@@ -330,6 +333,11 @@ O sistema deve agregar:
 3. Use portugues na UI (projeto brasileiro)
 4. Priorize rumores do Flamengo nos testes (time do usuario)
 
+### ANTES de fazer deploy:
+1. **SEMPRE execute `npm run build`** - Deve passar sem erros
+2. **SEMPRE teste localmente** com `npm run dev` e verifique a feature
+3. **NUNCA faca deploy sem testar** - Usuario pode ver bugs em producao
+
 ### APOS terminar:
 1. **ATUALIZE este documento (PROCESS.md)**
    - Adicione entrada no Historico de Mudancas
@@ -340,7 +348,8 @@ O sistema deve agregar:
 
 ### Comandos de validacao:
 ```bash
-npm run build    # Deve passar sem erros
+npm run build    # OBRIGATORIO antes de deploy
+npm run dev      # Testar localmente
 npm run lint     # Deve passar sem erros
 ```
 

@@ -705,7 +705,7 @@ export function RumorCard({
         }}>
           {/* Botao WhatsApp */}
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`${title} - Veja no Palpiteiros: ${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiros.com'}/rumor/${id}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(`${title} - Veja no Palpiteiros: ${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiro-mvp.vercel.app'}/rumor/${id}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -729,7 +729,7 @@ export function RumorCard({
 
           {/* Botao X/Twitter */}
           <a
-            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}`)}&url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiros.com'}/rumor/${id}`)}`}
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${title}`)}&url=${encodeURIComponent(`${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiro-mvp.vercel.app'}/rumor/${id}`)}`}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
@@ -781,7 +781,7 @@ export function RumorCard({
             onClick={(e) => {
               e.preventDefault()
               e.stopPropagation()
-              const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiros.com'}/rumor/${id}`
+              const url = `${typeof window !== 'undefined' ? window.location.origin : 'https://palpiteiro-mvp.vercel.app'}/rumor/${id}`
               navigator.clipboard.writeText(url)
               // Poderia adicionar um toast aqui
             }}
