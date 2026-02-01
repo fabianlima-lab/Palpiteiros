@@ -7,7 +7,6 @@ import { TEAMS, findTeamByName, getTeamColor } from '@/lib/teams'
 import { TeamButton, TeamLogo } from '@/app/components/TeamLogo'
 import { ReactionPicker, REACTIONS, type ReactionEmoji } from '@/app/components/ReactionPicker'
 import { RumorCard } from '@/app/components/RumorCard'
-import { getCredibilityBadge, getSignalFromPercent } from '@/lib/signals'
 
 // Design System do PRD
 const COLORS = {
@@ -1181,7 +1180,7 @@ export function FeedClient({ initialRumors, user, topUsers, topFontes = [] }: Fe
           overflowY: 'auto',
           flexShrink: 0,
         }}>
-          {/* Trending - COM SINAIS VISUAIS */}
+          {/* Trending */}
           <div style={{
             background: COLORS.bgSecondary,
             borderRadius: '12px',
@@ -1199,48 +1198,41 @@ export function FeedClient({ initialRumors, user, topUsers, topFontes = [] }: Fe
               📈 Trending
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {rumors.slice(0, 5).map((r, i) => {
-                const signal = getSignalFromPercent(Math.round(r.sentiment * 100))
-                return (
-                  <Link key={r.id} href={`/rumor/${r.id}`} style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '12px',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                  }}>
-                    <span style={{
-                      fontSize: '14px',
-                      fontWeight: 700,
-                      color: COLORS.textMuted,
-                      fontFamily: "'JetBrains Mono', monospace",
-                      width: '20px',
-                    }}>{i + 1}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '2px' }}>
-                        {r.playerName}
-                      </div>
-                      <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
-                        {r.toTeam} · {r.predictions.length} palpites
-                      </div>
+              {rumors.slice(0, 5).map((r, i) => (
+                <Link key={r.id} href={`/rumor/${r.id}`} style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '12px',
+                  textDecoration: 'none',
+                  color: 'inherit',
+                }}>
+                  <span style={{
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: COLORS.textMuted,
+                    fontFamily: "'JetBrains Mono', monospace",
+                    width: '20px',
+                  }}>{i + 1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '2px' }}>
+                      {r.playerName}
                     </div>
-                    {/* Sinal visual ao invés de % */}
-                    <span style={{
-                      fontSize: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '2px',
-                    }}>
-                      <span>{signal.emoji}</span>
-                      <span style={{ color: signal.color, fontWeight: 600 }}>{signal.arrow}</span>
-                    </span>
-                  </Link>
-                )
-              })}
+                    <div style={{ fontSize: '12px', color: COLORS.textMuted }}>
+                      {r.toTeam} · {r.predictions.length} palpites
+                    </div>
+                  </div>
+                  <span style={{
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    color: COLORS.accentGreen,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>{Math.round(r.sentiment * 100)}%</span>
+                </Link>
+              ))}
             </div>
           </div>
 
-          {/* PRD v3: Top Fontes (jornalistas) - COM BADGES */}
+          {/* PRD v3: Top Fontes (jornalistas) */}
           <div style={{
             background: COLORS.bgSecondary,
             borderRadius: '12px',
@@ -1257,51 +1249,48 @@ export function FeedClient({ initialRumors, user, topUsers, topFontes = [] }: Fe
               🏆 Top Fontes
             </div>
             {topFontes.length > 0 ? (
-              topFontes.map((fonte, i) => {
-                const badge = getCredibilityBadge(fonte.credibilidade)
-                return (
-                  <div key={fonte.id} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    padding: '10px 0',
-                    borderBottom: i < topFontes.length - 1 ? `1px solid ${COLORS.borderPrimary}` : 'none',
+              topFontes.map((fonte, i) => (
+                <div key={fonte.id} style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 0',
+                  borderBottom: i < topFontes.length - 1 ? `1px solid ${COLORS.borderPrimary}` : 'none',
+                }}>
+                  <div style={{
+                    width: '24px',
+                    fontSize: '14px',
+                    fontWeight: 700,
+                    color: i < 3 ? COLORS.accentGreen : COLORS.textMuted,
+                    fontFamily: "'JetBrains Mono', monospace",
                   }}>
+                    {fonte.rank}.
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      width: '24px',
                       fontSize: '14px',
-                      fontWeight: 700,
-                      color: i < 3 ? COLORS.accentGreen : COLORS.textMuted,
-                      fontFamily: "'JetBrains Mono', monospace",
+                      fontWeight: 500,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
                     }}>
-                      {fonte.rank}.
+                      {fonte.nome}
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 500,
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                      }}>
-                        {fonte.nome}
-                        {/* Badge de credibilidade */}
-                        {badge.emoji && (
-                          <span title={badge.label} style={{ fontSize: '14px' }}>
-                            {badge.emoji}
-                          </span>
-                        )}
-                      </div>
-                      <div style={{ fontSize: '11px', color: COLORS.textMuted }}>
-                        {fonte.totalPrevisoes} previsoes
-                      </div>
+                    <div style={{ fontSize: '11px', color: COLORS.textMuted }}>
+                      {fonte.totalPrevisoes} previsoes
                     </div>
                   </div>
-                )
-              })
+                  <div style={{
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    color: fonte.credibilidade >= 80 ? COLORS.accentGreen :
+                           fonte.credibilidade >= 60 ? '#F59E0B' : COLORS.colorNao,
+                    fontFamily: "'JetBrains Mono', monospace",
+                  }}>
+                    {fonte.taxaAcerto}
+                  </div>
+                </div>
+              ))
             ) : (
               <div style={{ fontSize: '13px', color: COLORS.textMuted, textAlign: 'center', padding: '12px 0' }}>
                 Carregando fontes...
