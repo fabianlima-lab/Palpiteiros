@@ -133,6 +133,10 @@ export function RumorCard({
   showSignals = true,
 }: RumorCardProps) {
   const [selectedReaction, setSelectedReaction] = useState<ReactionEmoji | null>(null)
+  const [reactionFeedback, setReactionFeedback] = useState<{
+    sentiment: 'up' | 'down' | 'neutral' | null
+    probability: 'up' | 'down' | null
+  } | null>(null)
 
   // Usar categoria PRD v3 se disponivel
   const categoryKey = categoria || category
@@ -179,6 +183,22 @@ export function RumorCard({
 
   const handleReact = (emoji: ReactionEmoji) => {
     setSelectedReaction(emoji)
+
+    // Feedback visual baseado no emoji escolhido
+    const emojiEffects: Record<ReactionEmoji, { sentiment: 'up' | 'down' | 'neutral', probability: 'up' | 'down' | null }> = {
+      '🔥': { sentiment: 'up', probability: 'up' },
+      '😍': { sentiment: 'up', probability: null },
+      '😐': { sentiment: 'neutral', probability: null },
+      '👎': { sentiment: 'down', probability: null },
+      '💀': { sentiment: 'down', probability: 'down' },
+    }
+
+    setReactionFeedback(emojiEffects[emoji])
+
+    // Limpar feedback após 2.5 segundos
+    setTimeout(() => {
+      setReactionFeedback(null)
+    }, 2500)
   }
 
   // PRD v3: Icone de tendencia
@@ -333,7 +353,17 @@ export function RumorCard({
             }}>
               {probDisplay}%
             </span>
-            {probTrend && probTrend !== 'estavel' && (
+            {/* Trend normal ou feedback da reação */}
+            {reactionFeedback?.probability ? (
+              <span style={{
+                fontSize: '14px',
+                color: reactionFeedback.probability === 'up' ? '#10B981' : '#EF4444',
+                fontWeight: '600',
+                animation: 'fadeInOut 2.5s ease',
+              }}>
+                {reactionFeedback.probability === 'up' ? '+0.1% ↑' : '-0.1% ↓'}
+              </span>
+            ) : probTrend && probTrend !== 'estavel' && (
               <span style={{
                 fontSize: '16px',
                 color: probTrend === 'subindo' ? '#10B981' : '#EF4444',
@@ -412,7 +442,21 @@ export function RumorCard({
                   }}>
                     {sentimentPercent}%
                   </span>
-                  <span style={{ fontSize: '12px', color: '#71717A' }}>positivo</span>
+                  {/* Feedback da reação ou label padrão */}
+                  {reactionFeedback?.sentiment ? (
+                    <span style={{
+                      fontSize: '12px',
+                      color: reactionFeedback.sentiment === 'up' ? '#10B981' :
+                             reactionFeedback.sentiment === 'down' ? '#EF4444' : '#71717A',
+                      fontWeight: '500',
+                      animation: 'fadeInOut 2.5s ease',
+                    }}>
+                      {reactionFeedback.sentiment === 'up' ? '+1% ↑' :
+                       reactionFeedback.sentiment === 'down' ? '-1% ↓' : '±0%'}
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '12px', color: '#71717A' }}>positivo</span>
+                  )}
                 </div>
 
                 {/* Barra de sentimento (igual à de probabilidade) */}
@@ -680,6 +724,12 @@ export function RumorCard({
         @keyframes pulse {
           0%, 100% { opacity: 1; }
           50% { opacity: 0.7; }
+        }
+        @keyframes fadeInOut {
+          0% { opacity: 0; transform: translateY(4px); }
+          15% { opacity: 1; transform: translateY(0); }
+          85% { opacity: 1; transform: translateY(0); }
+          100% { opacity: 0; transform: translateY(-4px); }
         }
       `}</style>
     </div>
