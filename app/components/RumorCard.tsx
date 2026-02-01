@@ -337,39 +337,39 @@ export function RumorCard({
             </span>
           </div>
 
-          {/* Seta de tendência (sem número) */}
+          {/* Numero grande */}
           <div style={{
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'baseline',
             gap: '4px',
             marginBottom: '8px',
-            minHeight: '28px',
           }}>
-            {/* Trend normal ou feedback da reação - só seta */}
+            <span style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              color: getProbabilidadeColor(probDisplay),
+              fontFamily: 'JetBrains Mono, monospace',
+              lineHeight: 1,
+            }}>
+              {probDisplay}%
+            </span>
+            {/* Trend normal ou feedback da reação - só seta, sem % */}
             {reactionFeedback?.probability ? (
               <span style={{
-                fontSize: '24px',
+                fontSize: '16px',
                 color: reactionFeedback.probability === 'up' ? '#10B981' : '#EF4444',
                 fontWeight: '600',
                 animation: 'fadeInOut 2.5s ease',
               }}>
                 {reactionFeedback.probability === 'up' ? '↑' : '↓'}
               </span>
-            ) : probTrend && probTrend !== 'estavel' ? (
+            ) : probTrend && probTrend !== 'estavel' && (
               <span style={{
-                fontSize: '24px',
+                fontSize: '16px',
                 color: probTrend === 'subindo' ? '#10B981' : '#EF4444',
                 fontWeight: '600',
               }}>
                 {getTrendIcon(probTrend)}
-              </span>
-            ) : (
-              <span style={{
-                fontSize: '24px',
-                color: getProbabilidadeColor(probDisplay),
-                fontWeight: '600',
-              }}>
-                →
               </span>
             )}
           </div>
@@ -427,18 +427,25 @@ export function RumorCard({
             }
             return (
               <>
-                {/* Seta de tendência (sem número) */}
                 <div style={{
                   display: 'flex',
-                  alignItems: 'center',
+                  alignItems: 'baseline',
                   gap: '4px',
                   marginBottom: '8px',
-                  minHeight: '28px',
                 }}>
-                  {/* Feedback da reação - só seta */}
+                  <span style={{
+                    fontSize: '28px',
+                    fontWeight: '700',
+                    color: getSentimentoColor(sentimentPercent),
+                    fontFamily: 'JetBrains Mono, monospace',
+                    lineHeight: 1,
+                  }}>
+                    {sentimentPercent}%
+                  </span>
+                  {/* Feedback da reação - só seta, sem % */}
                   {reactionFeedback?.sentiment ? (
                     <span style={{
-                      fontSize: '24px',
+                      fontSize: '16px',
                       color: reactionFeedback.sentiment === 'up' ? '#10B981' :
                              reactionFeedback.sentiment === 'down' ? '#EF4444' : '#71717A',
                       fontWeight: '600',
@@ -448,13 +455,7 @@ export function RumorCard({
                        reactionFeedback.sentiment === 'down' ? '↓' : '→'}
                     </span>
                   ) : (
-                    <span style={{
-                      fontSize: '24px',
-                      color: getSentimentoColor(sentimentPercent),
-                      fontWeight: '600',
-                    }}>
-                      →
-                    </span>
+                    <span style={{ fontSize: '12px', color: '#71717A' }}>positivo</span>
                   )}
                 </div>
 
