@@ -39,19 +39,47 @@ export async function GET(request: NextRequest) {
   }
 
   // Fetch rumor data
-  const rumor = await prisma.rumor.findUnique({
-    where: { id },
-    select: {
-      title: true,
-      playerName: true,
-      toTeam: true,
-      fromTeam: true,
-      categoria: true,
-      category: true,
-      probabilidade: true,
-      sentiment: true,
-    },
-  })
+  let rumor
+  try {
+    rumor = await prisma.rumor.findUnique({
+      where: { id },
+      select: {
+        title: true,
+        playerName: true,
+        toTeam: true,
+        fromTeam: true,
+        categoria: true,
+        category: true,
+        probabilidade: true,
+        sentiment: true,
+      },
+    })
+  } catch (error) {
+    console.error('OG Image - Prisma error:', error)
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#09090B',
+            color: '#EF4444',
+            fontSize: 32,
+          }}
+        >
+          <span>Database Error</span>
+          <span style={{ fontSize: 20, color: '#71717A', marginTop: 16 }}>
+            {String(error).slice(0, 100)}
+          </span>
+        </div>
+      ),
+      { width: 1200, height: 630 }
+    )
+  }
 
   if (!rumor) {
     return new ImageResponse(
